@@ -66,6 +66,15 @@ const LobbyScreen = () => {
         }
     }, [data]);
 
+    useEffect(() => {
+        if (!userId) {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+            });
+        }
+    }, [userId, navigation]);
+
     // Refetch data when the screen comes back into focus
     useFocusEffect(
         React.useCallback(() => {
