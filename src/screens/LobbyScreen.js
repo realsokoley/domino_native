@@ -36,6 +36,11 @@ const LobbyScreen = () => {
                 const storedUserId = await AsyncStorage.getItem('user_id');
                 if (storedUserId) {
                     setUserId(parseInt(storedUserId, 10));
+                } else {
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Login' }],
+                    });
                 }
             } catch (error) {
                 console.error('Error fetching user_id from AsyncStorage:', error);
@@ -66,16 +71,6 @@ const LobbyScreen = () => {
         }
     }, [data]);
 
-    useEffect(() => {
-        if (!userId) {
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Login' }],
-            });
-        }
-    }, [userId, navigation]);
-
-    // Refetch data when the screen comes back into focus
     useFocusEffect(
         React.useCallback(() => {
             if (refetch) {

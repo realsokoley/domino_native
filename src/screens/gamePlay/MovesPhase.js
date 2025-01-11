@@ -51,11 +51,13 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     const [playerMoves, setPlayerMoves] = useState({});
     const { data, loading, error } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
+        fetchPolicy: 'network-only',
         pollInterval: 2000,
     });
 
     const { data: moveData, refetch: refetchMoveData } = useQuery(GET_MOVE_USER_BY_MOVE_AND_TURN, {
         variables: { gameRoundId, moveNumber: currentMoveNumber, turn: currentTurn },
+        fetchPolicy: 'network-only',
         skip: !data,
     });
 
@@ -83,7 +85,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
             const gameUserRounds = data.game_user_round_by_round_id;
             const player = gameUserRounds.find(p => p.turn === currentTurn);
             console.log(player);
-
+            console.log(newMoves);
             console.log(moveData);
             console.log(currentTurn);
             console.log(currentMoveNumber);
