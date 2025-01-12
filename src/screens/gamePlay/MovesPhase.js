@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {gql, useMutation, useQuery} from '@apollo/client';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { gql, useMutation, useQuery } from '@apollo/client';
 
 const GET_GAME_USER_ROUND = gql`
   query GetGameUserRounds($gameRoundId: Int!) {
@@ -26,6 +26,7 @@ const GET_MOVE_USER_BY_MOVE_AND_TURN = gql`
       bone
       turn
       game_user_round {
+        id
         game_user {
           id
         }
@@ -49,7 +50,8 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     const [bonesNumber, setBonesNumber] = useState(0);
     const [bones, setBones] = useState([]);
     const [playerMoves, setPlayerMoves] = useState({});
-    const { data, loading, error } = useQuery(GET_GAME_USER_ROUND, {
+    const [playedBones, setPlayedBones] = useState([]);
+    const { data, loading, error, refetch } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
         fetchPolicy: 'network-only',
         pollInterval: 2000,
@@ -58,6 +60,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     const { data: moveData, refetch: refetchMoveData } = useQuery(GET_MOVE_USER_BY_MOVE_AND_TURN, {
         variables: { gameRoundId, moveNumber: currentMoveNumber, turn: currentTurn },
         fetchPolicy: 'network-only',
+        pollInterval: 2000,
         skip: !data,
     });
 
@@ -80,47 +83,30 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
                 return acc;
             }, {});
             setPlayerMoves(prevMoves => {
-                return {...prevMoves, ...newMoves};
+                return { ...prevMoves, ...newMoves };
             });
-            const gameUserRounds = data.game_user_round_by_round_id;
-            const player = gameUserRounds.find(p => p.turn === currentTurn);
-            console.log(player);
-            console.log(newMoves);
-            console.log(moveData);
-            console.log(currentTurn);
-            console.log(currentMoveNumber);
-            console.log(bonesNumber);
-            if (player && newMoves[player.game_user.id] != null) {
-                setCurrentTurn((currentTurn + 1) % players.length);
-                console.log('Current turn:', currentTurn);
-                if (currentTurn === 0) {
-                    setMovesNumber((movesNumber + 1) % bonesNumber);
-                    if (movesNumber === 0) {
-                        onMovesComplete();
-                    } else {
-                        setCurrentMoveNumber(currentMoveNumber + 1);
-                    }
-                }
-            }
         }
-    }, [moveData, players, currentGameUserId, currentTurn, onMovesComplete]);
+    }, [moveData]);
+
+    useEffect(() => {
+        if (moveData && moveData.move_user_by_move_and_turn.every(move => move.bone !== null)) {
+            if (currentTurn === players.length - 1) {
+                if (movesNumber === bonesNumber - 1) {
+                    onMovesComplete();
+                }
+                setMovesNumber((movesNumber + 1));
+                setCurrentMoveNumber(currentMoveNumber + 1);
+            }
+            setCurrentTurn((currentTurn + 1) % players.length);
+        }
+    }, [moveData, players.length, currentTurn, movesNumber, bonesNumber, currentMoveNumber, onMovesComplete, refetchMoveData]);
 
     const handleBoneClick = (boneId) => {
         const gameUserRoundId = parseInt(data.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId).id, 10);
         makeMove({ variables: { gameUserRoundId, boneId, moveNumber: currentMoveNumber } })
             .then(response => {
-                console.log('Move made:', response.data.move);
-                setCurrentTurn((currentTurn + 1) % players.length);
-                refetchMoveData().then(() => {
-                    if (currentTurn === 0) {
-                        setMovesNumber((movesNumber + 1) % bonesNumber);
-                        if (movesNumber === 0) {
-                            onMovesComplete();
-                        } else {
-                            setCurrentMoveNumber(currentMoveNumber + 1);
-                        }
-                    }
-                });
+                setPlayedBones([...playedBones, boneId]);
+                refetchMoveData();
             })
             .catch(error => {
                 console.error('Error making move:', error);
@@ -145,15 +131,24 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
                     </View>
                 );
             })}
-            {currentTurn === currentUserRound.turn && (
-                <View style={styles.bonesContainer}>
-                    {bones.map((bone, index) => (
-                        <TouchableOpacity key={index} onPress={() => handleBoneClick(index)}>
-                            <Text style={styles.bonesText}>{bone}</Text>
+            <View style={styles.bonesContainer}>
+                {bones.filter((_, index) => !playedBones.includes(index)).map((bone, index) => {
+                    const isCurrentUserTurn = moveData?.move_user_by_move_and_turn.some(
+                        move => move.game_user_round.game_user.id === currentGameUserId && move.bone === null
+                    );
+                    return (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => isCurrentUserTurn && handleBoneClick(index)}
+                            disabled={!isCurrentUserTurn}
+                        >
+                            <Text style={[styles.bonesText, !isCurrentUserTurn && styles.disabledBoneText]}>
+                                {bone}
+                            </Text>
                         </TouchableOpacity>
-                    ))}
-                </View>
-            )}
+                    );
+                })}
+            </View>
         </View>
     );
 };
@@ -170,6 +165,9 @@ const styles = StyleSheet.create({
     },
     bonesText: {
         fontWeight: 'bold',
+    },
+    disabledBoneText: {
+        color: 'gray',
     }
 });
 

@@ -61,6 +61,7 @@ const LobbyScreen = () => {
             if (activeGame) {
                 setIsInActiveGame(true);
                 setActiveGameId(activeGame.game.id);
+                AsyncStorage.setItem('active_game_id', activeGame.game.id);
             } else {
                 setIsInActiveGame(false);
                 setActiveGameId(null);
