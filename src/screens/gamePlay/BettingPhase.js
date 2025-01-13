@@ -30,22 +30,6 @@ const PLACE_BET = gql`
   }
 `;
 
-const GET_MOVE_USER_BY_MOVE_AND_TURN = gql`
-  query GetMoveUserByMoveAndTurn($gameRoundId: Int!, $moveNumber: Int!, $turn: Int!) {
-    move_user_by_move_and_turn(game_round_id: $gameRoundId, move_number: $moveNumber, turn: $turn) {
-      id
-    }
-  }
-`;
-
-const GENERATE_MOVE_ORDER = gql`
-  mutation GenerateMoveOrder($gameUserRoundId: Int!, $moveNumber: Int!, $turn: Int!) {
-    generateMoveOrder(game_user_round_id: $gameUserRoundId, move_number: $moveNumber, turn: $turn) {
-      id
-    }
-  }
-`;
-
 const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, players, getBetStyle }) => {
     const [bet, setBet] = useState(0);
     const [isTurnToBet, setIsTurnToBet] = useState(false);
@@ -55,18 +39,13 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
     });
 
     const [placeBet, { loading: placingBetLoading }] = useMutation(PLACE_BET);
-    const [generateMoveOrder] = useMutation(GENERATE_MOVE_ORDER);
-    const { refetch: refetchMoveUser } = useQuery(GET_MOVE_USER_BY_MOVE_AND_TURN, {
-        variables: { gameRoundId, moveNumber: 1, turn: currentGameUserId },
-        skip: true
-    });
 
     useEffect(() => {
         if (data) {
             const gameUserRounds = data.game_user_round_by_round_id;
             const currentUserRound = gameUserRounds.find(r => r.game_user.id == currentGameUserId);
-            const canBet = gameUserRounds.every(r =>
-                (r.turn < currentUserRound.turn && r.bet != null) || r.game_user.id == currentGameUserId || currentUserRound.turn === 0);
+            const canBet = gameUserRounds.some(r =>
+                (r.turn == currentUserRound.turn - 1 && r.bet != null)) || currentUserRound.turn === 0;
             console.log('Can bet:', canBet);
             console.log(currentGameUserId);
             console.log('Current user round:', currentUserRound);
@@ -98,24 +77,10 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
             });
     };
 
-    const checkAllBetsPlaced = async () => {
+    const checkAllBetsPlaced = () => {
         const allBetsPlaced = data.game_user_round_by_round_id.every(r => r.bet != null);
         if (allBetsPlaced) {
-            const gameUserRoundId = parseInt(data.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId).id, 10);
-            await checkAndGenerateMoveOrder(gameUserRoundId);
             onBettingComplete();
-        }
-    };
-
-    const checkAndGenerateMoveOrder = async (gameUserRoundId) => {
-        try {
-            const { data } = await refetchMoveUser({ gameRoundId, moveNumber: 1, turn: currentUserRound.turn });
-            if (data.move_user_by_move_and_turn.length === 0) {
-                const response = await generateMoveOrder({ variables: { gameUserRoundId, moveNumber: 1, turn: 0 } });
-                console.log('Move order generated:', response.data.generateMoveOrder);
-            }
-        } catch (error) {
-            console.error('Error checking move user or generating move order:', error);
         }
     };
 
