@@ -51,6 +51,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     const [bones, setBones] = useState([]);
     const [playerMoves, setPlayerMoves] = useState({});
     const [playedBones, setPlayedBones] = useState([]);
+    const [isMakingMove, setIsMakingMove] = useState(false);
     const { data, loading, error, refetch } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
         fetchPolicy: 'network-only',
@@ -78,11 +79,6 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
 
     useEffect(() => {
         if (moveData) {
-            console.log('currentuser:', currentGameUserId);
-            console.log('moveData:', moveData);
-            console.log(moveData?.move_user_by_move_and_turn.find(
-                move => move.bone === null
-            ));
             const newMoves = moveData.move_user_by_move_and_turn.reduce((acc, move) => {
                 acc[move.game_user_round.game_user.id] = move.bone;
                 return acc;
@@ -107,7 +103,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     }, [moveData, players.length, currentTurn, movesNumber, bonesNumber, currentMoveNumber, onMovesComplete, refetchMoveData]);
 
     const handleBoneClick = (boneId) => {
-        console.log(currentMoveNumber);
+        setIsMakingMove(true);
         const gameUserRoundId = parseInt(data.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId).id, 10);
         makeMove({ variables: { gameUserRoundId, boneId, moveNumber: currentMoveNumber } })
             .then(response => {
@@ -116,6 +112,9 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
             })
             .catch(error => {
                 console.error('Error making move:', error);
+            })
+            .finally(() => {
+                setIsMakingMove(false);
             });
     };
 
@@ -146,10 +145,10 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
                     return (
                         <TouchableOpacity
                             key={originalIndex}
-                            onPress={() => isCurrentUserTurn && handleBoneClick(originalIndex)}
-                            disabled={!isCurrentUserTurn}
+                            onPress={() => isCurrentUserTurn && !isMakingMove && handleBoneClick(originalIndex)}
+                            disabled={!isCurrentUserTurn || isMakingMove}
                         >
-                            <Text style={[styles.bonesText, !isCurrentUserTurn && styles.disabledBoneText]}>
+                            <Text style={[styles.bonesText, (!isCurrentUserTurn || isMakingMove) && styles.disabledBoneText]}>
                                 {bone}
                             </Text>
                         </TouchableOpacity>

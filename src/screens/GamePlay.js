@@ -75,13 +75,13 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
             case 'position1':
                 return usersCount === 2 ?
                     { top: 90, alignSelf: 'center' } :
-                    { left: 90, alignSelf: 'center', transform: [{ translateY: -40 }] };
+                    { alignSelf: 'center', transform: [{ translateY: -40 }, {translateX: -60}] };
             case 'position2':
                 return usersCount === 3 ?
-                    { right: 90, alignSelf: 'center', transform: [{ translateY: -40 }] } :
+                    { alignSelf: 'center', transform: [{ translateY: -40 } , {translateX: 60}] } :
                     { top: 90, alignSelf: 'center' };
             case 'position3':
-                return { right: 90, alignSelf: 'center', transform: [{ translateY: -40 }] };
+                return { alignSelf: 'center', transform: [{ translateY: -40 } , {translateX: 60}] };
             default:
                 return {};
         }
