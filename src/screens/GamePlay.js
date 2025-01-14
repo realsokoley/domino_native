@@ -24,13 +24,14 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const [gameRounds, setGameRounds] = useState([]);
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
     const gameIdInt = parseInt(gameDetails?.id, 10);
-    const { data, loading, error } = useQuery(GET_GAME_ROUNDS, {
+    const { data, loading, error, refetch } = useQuery(GET_GAME_ROUNDS, {
         variables: { gameId: gameIdInt },
         skip: currentPhase !== 'waiting',
         onCompleted: data => {
             setGameRounds(data.game_rounds_by_game_id);
         },
         pollInterval: 2000,
+        fetchPolicy: 'network-only',
     });
 
     const handlePreparationComplete = (gameUserRound) => {
@@ -62,23 +63,27 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     useEffect(() => {
         const initialTurnPlayer = players.find(player => player.turn_value === 0);
         if (initialTurnPlayer) {
-            if (gameRounds.length > 0) {
-                const lastValidRound = gameRounds.slice().reverse().find(round => round.phase && round.phase !== 'waiting');
+            setCurrentTurn(initialTurnPlayer.user.id);
+            refetch();
+        }
+    }, [players, refetch]);
+
+    useEffect(() => {
+        if (data) {
+            setGameRounds(data.game_rounds_by_game_id);
+            if (data.game_rounds_by_game_id.length > 0) {
+                const lastValidRound = data.game_rounds_by_game_id.slice().reverse().find(round => round.phase && round.phase !== 'waiting');
                 if (lastValidRound) {
                     setCurrentPhase(lastValidRound.phase);
-                    setCurrentRoundIndex(gameRounds.findIndex(round => round.id === lastValidRound.id));
+                    setCurrentRoundIndex(data.game_rounds_by_game_id.findIndex(round => round.id === lastValidRound.id));
                 } else {
                     setTimeout(() => {
                         setCurrentPhase('preparation');
                     }, 3000);
                 }
-            } else {
-                setTimeout(() => {
-                    setCurrentPhase('preparation');
-                }, 3000);
             }
         }
-    }, [gameRounds, players]);
+    }, [data]);
 
     const getBonesStyle = (position) => {
         switch (position) {
