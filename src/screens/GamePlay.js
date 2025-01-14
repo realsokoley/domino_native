@@ -10,6 +10,7 @@ const GET_GAME_ROUNDS = gql`
     query GetGameRounds($gameId: Int!) {
       game_rounds_by_game_id(game_id: $gameId) {
         id
+        phase
         round {
           id
         }
@@ -25,7 +26,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const gameIdInt = parseInt(gameDetails?.id, 10);
     const { data, loading, error } = useQuery(GET_GAME_ROUNDS, {
         variables: { gameId: gameIdInt },
-        skip: currentPhase !== 'preparation',
+        skip: currentPhase !== 'waiting',
         onCompleted: data => {
             setGameRounds(data.game_rounds_by_game_id);
         },
@@ -61,12 +62,23 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     useEffect(() => {
         const initialTurnPlayer = players.find(player => player.turn_value === 0);
         if (initialTurnPlayer) {
-            setCurrentTurn(initialTurnPlayer.user.id);
-            setTimeout(() => {
-                setCurrentPhase('preparation');
-            }, 3000);
+            if (gameRounds.length > 0) {
+                const lastValidRound = gameRounds.slice().reverse().find(round => round.phase && round.phase !== 'waiting');
+                if (lastValidRound) {
+                    setCurrentPhase(lastValidRound.phase);
+                    setCurrentRoundIndex(gameRounds.findIndex(round => round.id === lastValidRound.id));
+                } else {
+                    setTimeout(() => {
+                        setCurrentPhase('preparation');
+                    }, 3000);
+                }
+            } else {
+                setTimeout(() => {
+                    setCurrentPhase('preparation');
+                }, 3000);
+            }
         }
-    }, [players]);
+    }, [gameRounds, players]);
 
     const getBonesStyle = (position) => {
         switch (position) {

@@ -46,10 +46,6 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
             const currentUserRound = gameUserRounds.find(r => r.game_user.id == currentGameUserId);
             const canBet = gameUserRounds.some(r =>
                 (r.turn == currentUserRound.turn - 1 && r.bet != null)) || currentUserRound.turn === 0;
-            console.log('Can bet:', canBet);
-            console.log(currentGameUserId);
-            console.log('Current user round:', currentUserRound);
-            console.log('Game user rounds:', gameUserRounds);
             setIsTurnToBet(canBet);
         }
     }, [data, currentGameUserId]);
