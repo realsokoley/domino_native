@@ -9,6 +9,9 @@ const GET_GAME_USER_ROUND = gql`
       turn
       bones_start
       bones_left
+      game_round {
+        moves_made
+      }
       game_user {
         id
         user {
@@ -44,14 +47,15 @@ const MAKE_MOVE = gql`
 `;
 
 const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, getBonesStyle }) => {
-    const [currentMoveNumber, setCurrentMoveNumber] = useState(1);
+    const [currentMoveNumber, setCurrentMoveNumber] = useState(0);
     const [currentTurn, setCurrentTurn] = useState(0);
-    const [movesNumber, setMovesNumber] = useState(0);
+    const [movesNumber, setMovesNumber] = useState(-1);
     const [bonesNumber, setBonesNumber] = useState(0);
     const [bones, setBones] = useState([]);
     const [playerMoves, setPlayerMoves] = useState({});
     const [playedBones, setPlayedBones] = useState([]);
     const [isMakingMove, setIsMakingMove] = useState(false);
+    const [finalizingMove, setFinalizingMove] = useState(false);
     const { data, loading, error, refetch } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
         fetchPolicy: 'network-only',
@@ -62,20 +66,35 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
         variables: { gameRoundId, moveNumber: currentMoveNumber, turn: currentTurn },
         fetchPolicy: 'network-only',
         pollInterval: 2000,
-        skip: !data,
+        skip: movesNumber < 0 || finalizingMove,
     });
 
     const [makeMove] = useMutation(MAKE_MOVE);
 
     useEffect(() => {
-        if (data) {
+        if (data && currentMoveNumber == 0 && !finalizingMove) {
             const gameUserRounds = data.game_user_round_by_round_id;
             const currentUserRound = gameUserRounds.find(r => r.game_user.id == currentGameUserId);
-            const bonesArray = JSON.parse(currentUserRound?.bones_start.replace(/'/g, '"'));
-            setBonesNumber(bonesArray.length);
-            setBones(bonesArray);
+            const bonesStartArray = JSON.parse(currentUserRound?.bones_start.replace(/'/g, '"'));
+            const bonesLeftArray = JSON.parse(currentUserRound?.bones_left.replace(/'/g, '"'));
+
+            const playedBones = bonesStartArray.reduce((acc, bone, index) => {
+                if (bonesLeftArray[index] === 'XXX') {
+                    acc.push(index);
+                }
+                return acc;
+            }, []);
+
+            setBonesNumber(bonesStartArray.length);
+            setBones(bonesStartArray);
+            setPlayedBones(playedBones);
+
+            const movesMade = currentUserRound.game_round.moves_made;
+            setCurrentMoveNumber(movesMade + 1);
+            setMovesNumber(movesMade);
+            refetchMoveData();
         }
-    }, [data, currentGameUserId]);
+    }, [data, currentGameUserId, currentMoveNumber, refetchMoveData, movesNumber]);
 
     useEffect(() => {
         if (moveData) {
