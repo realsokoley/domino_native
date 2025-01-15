@@ -98,6 +98,9 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
 
     useEffect(() => {
         if (moveData) {
+            if (currentTurn === 0) {
+                setPlayerMoves({});
+            }
             const newMoves = moveData.move_user_by_move_and_turn.reduce((acc, move) => {
                 acc[move.game_user_round.game_user.id] = move.bone;
                 return acc;
@@ -106,22 +109,31 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
                 return { ...prevMoves, ...newMoves };
             });
         }
-    }, [moveData]);
+    }, [currentTurn, moveData, players.length]);
 
     useEffect(() => {
         if (moveData && moveData.move_user_by_move_and_turn.every(move => move.bone !== null)) {
             if (currentTurn === players.length - 1) {
-                if (movesNumber === bonesNumber - 1) {
-                    onMovesComplete();
-                }
-                setMovesNumber((movesNumber + 1));
-                setCurrentMoveNumber(currentMoveNumber + 1);
+                setFinalizingMove(true);
+                setTimeout(() => {
+                    if (movesNumber === bonesNumber - 1) {
+                        onMovesComplete();
+                    }
+                    setMovesNumber((movesNumber + 1));
+                    setCurrentMoveNumber(currentMoveNumber + 1);
+                    setFinalizingMove(false);
+                    setCurrentTurn(0);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    setCurrentTurn((currentTurn + 1) % players.length);
+                }, 1000);
             }
-            setCurrentTurn((currentTurn + 1) % players.length);
         }
-    }, [moveData, players.length, currentTurn, movesNumber, bonesNumber, currentMoveNumber, onMovesComplete, refetchMoveData]);
+    }, [moveData, players.length, currentTurn, movesNumber, bonesNumber, currentMoveNumber, onMovesComplete, refetchMoveData, finalizingMove]);
 
     const handleBoneClick = (boneId) => {
+        if (finalizingMove) return; // Block functionality if finalizing move
         setIsMakingMove(true);
         const gameUserRoundId = parseInt(data.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId).id, 10);
         makeMove({ variables: { gameUserRoundId, boneId, moveNumber: currentMoveNumber } })
