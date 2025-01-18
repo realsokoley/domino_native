@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
 import { gql, useQuery, useMutation } from '@apollo/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
 import GamePlay from './GamePlay';
 
 const UNREGISTER_FROM_ROOM = gql`
@@ -39,7 +41,7 @@ const GET_GAME_USERS = gql`
 `;
 
 const GameScreen = ({ route, navigation }) => {
-    const [gameId, setGameId] = useState(null); // State to hold gameId
+    const [gameId, setGameId] = useState(null);
     const [uniqCode, setUniqCode] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [roundsMaxAmount, setRoundsMaxAmount] = useState(false);
@@ -84,11 +86,10 @@ const GameScreen = ({ route, navigation }) => {
     useEffect(() => {
         const fetchGameId = async () => {
             const storedGameId = await AsyncStorage.getItem('active_game_id');
-            if (storedGameId) setGameId(parseInt(storedGameId, 10)); // Ensure gameId is set as a number
+            if (storedGameId) setGameId(parseInt(storedGameId, 10));
         };
         fetchGameId();
     }, []);
-
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -102,13 +103,11 @@ const GameScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (gameUsersData?.game_users_by_game_id && usersCount) {
-
             const sortedPlayers = gameUsersData.game_users_by_game_id.filter(p => p != null);
             const userIndex = sortedPlayers.findIndex((player) => player.user.id == userId);
             const positions = sortedPlayers.map((player, index) => ({
                 ...player,
                 name: player.user.id == userId ? "You" : player.user.username,
-
                 position: (index - userIndex + usersCount) % usersCount
             }));
             const currentUserGameInfo = sortedPlayers.find((player) => player.user.id == userId);
@@ -131,8 +130,13 @@ const GameScreen = ({ route, navigation }) => {
         navigation.reset({ index: 0, routes: [{ name: 'Lobby' }] });
     };
 
+    const handleCopyCode = () => {
+        Clipboard.setString(uniqCode);
+        Alert.alert('Copied', 'Game code copied to clipboard.');
+    };
+
     const getDynamicStyles = (usersCount) => ({
-        position0: { bottom: 20, alignSelf: 'center' },
+        position0: { bottom: 150, alignSelf: 'center' },
         position1: usersCount === 2
             ? { top: 20, alignSelf: 'center' }
             : { left: 20, alignSelf: 'center', transform: [{ translateY: -40 }] },
@@ -144,31 +148,55 @@ const GameScreen = ({ route, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text>Game Code: {uniqCode}</Text>
+            <View style={styles.topRightButtons}>
+                <TouchableOpacity onPress={handleBackToLobby} style={styles.iconButton}>
+                    <Icon name="home-outline" size={28} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleUnregister} style={styles.iconButton} disabled={unregistering}>
+                    <Icon name="log-out-outline" size={31} color="#000" />
+                </TouchableOpacity>
+            </View>
+            <View style={styles.gameCodeContainer}>
+                <Text>Game Code: {uniqCode}</Text>
+                <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
+                    <Icon name="copy-outline" size={20} color="#000" />
+                </TouchableOpacity>
+            </View>
             <Text>Players: {usersRegistered}/{usersCount}</Text>
-            <Text>Max Rounds: {roundsMaxAmount}</Text>
-            <Text>Rounds Before Max: {roundsBeforeMaxAmount}</Text>
-            <GamePlay userId = {userId} currentGameUserId = {currentGameUserId} gameStarted = {gameStarted} gameDetails={gameDetailsData?.game} players={players} dynamicStyles={getDynamicStyles(usersCount)} usersCount={usersCount} />
-            <Button
-                title={unregistering ? 'Unregistering...' : 'Unregister'}
-                onPress={handleUnregister}
-                disabled={unregistering}
-            />
-            <Button title="Back to Lobby" onPress={handleBackToLobby} />
+            <Text>Highest Domino Value: {roundsBeforeMaxAmount}</Text>
+            <Text>Mid Game Rounds Amount: {roundsMaxAmount}</Text>
+            <GamePlay userId={userId} currentGameUserId={currentGameUserId} gameStarted={gameStarted} gameDetails={gameDetailsData?.game} players={players} dynamicStyles={getDynamicStyles(usersCount)} usersCount={usersCount} />
         </View>
     );
-
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20 },
+    topRightButtons: {
+        position: 'absolute',
+        top: 15,
+        right: 20,
+        flexDirection: 'row',
+        zIndex: 1,
+    },
+    iconButton: {
+        marginLeft: 10,
+    },
+    gameCodeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    copyButton: {
+        marginLeft: 10,
+    },
     gameArea: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
         borderWidth: 2,
-        borderColor: 'red',
+        borderColor: '#fff',
     },
     playerCircle: {
         width: 60,
@@ -180,11 +208,5 @@ const styles = StyleSheet.create({
         position: 'absolute',
     }
 });
-
-const PlayerCircle = ({ name, style }) => (
-    <View style={[styles.playerCircle, style]}>
-        <Text>{name}</Text>
-    </View>
-);
 
 export default GameScreen;

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { gql, useMutation, useQuery } from '@apollo/client';
+import turnButtonImage from '../../../assets/turn_button.png';
+import boneImages from '../../assets/BoneAssets';
 
 const GET_GAME_USER_ROUND = gql`
   query GetGameUserRounds($gameRoundId: Int!) {
@@ -30,25 +32,14 @@ const PLACE_BET = gql`
   }
 `;
 
-const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, players, getBetStyle }) => {
+const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, players, getBetStyle, getTurnButtonStyle }) => {
     const [bet, setBet] = useState(0);
-    const [isTurnToBet, setIsTurnToBet] = useState(false);
     const { data, loading, error } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
         pollInterval: 2000,
     });
 
     const [placeBet, { loading: placingBetLoading }] = useMutation(PLACE_BET);
-
-    useEffect(() => {
-        if (data) {
-            const gameUserRounds = data.game_user_round_by_round_id;
-            const currentUserRound = gameUserRounds.find(r => r.game_user.id == currentGameUserId);
-            const canBet = gameUserRounds.some(r =>
-                (r.turn == currentUserRound.turn - 1 && r.bet != null)) || currentUserRound.turn === 0;
-            setIsTurnToBet(canBet);
-        }
-    }, [data, currentGameUserId]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -84,31 +75,29 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
     if (error) return <Text>Error: {error.message}</Text>;
 
     const currentUserRound = data?.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId);
-    let numberOfOptions = 0;
+    let bonesArray = [];
     try {
-        const bonesArray = JSON.parse(currentUserRound?.bones_start.replace(/'/g, '"'));
-        numberOfOptions = bonesArray.length;
+        bonesArray = JSON.parse(currentUserRound?.bones_start.replace(/'/g, '"'));
     } catch (e) {
         console.error('Error parsing bones_start:', e);
     }
 
+    const firstUserToBet = data.game_user_round_by_round_id.find(r => r.bet == null);
+
     return (
         <View style={styles.container}>
-            <Text>Your Bones: {currentUserRound?.bones_start}</Text>
-            {isTurnToBet && currentUserRound?.bet == null ? (
+            {firstUserToBet?.game_user.id == currentGameUserId && (
                 <>
                     <Picker
                         selectedValue={bet}
                         onValueChange={handleBetChange}
-                        style={{ height: 50, width: 150 }}>
-                        {[...Array(numberOfOptions + 1).keys()].map(value => (
+                        style={{ height: 50, width: 150, top: -80 }}>
+                        {[...Array(bonesArray.length + 1).keys()].map(value => (
                             <Picker.Item key={value} label={`${value}`} value={value} />
                         ))}
                     </Picker>
                     <Button title="Place Bet" onPress={submitBet} disabled={placingBetLoading} />
                 </>
-            ) : (
-                <Text>Waiting for other players to bet...</Text>
             )}
             {players.map((player) => {
                 const playerBet = data?.game_user_round_by_round_id.find(r => r.game_user.user.id == player.user.id)?.bet;
@@ -121,6 +110,49 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
                     </View>
                 );
             })}
+            {players.map((player) => {
+                const turnButtonStyle = getTurnButtonStyle(`position${player.position}`);
+                return (
+                    <View key={player.user.id} style={[styles.bonesContainer, turnButtonStyle]}>
+                        {firstUserToBet?.game_user.user.id === player.user.id && (
+                            <Image
+                                style={styles.turnButton}
+                                source={turnButtonImage}
+                            />
+                        )}
+                    </View>
+                );
+            })}
+            <View style={styles.bonesRow}>
+                {bonesArray.slice(0, 7).map((bone, index) => {
+                    if (bone) {
+                        const boneImageName = bone.join('_');
+                        return (
+                            <Image
+                                key={`bone-${index}`}
+                                style={styles.boneImage}
+                                source={boneImages[boneImageName]}
+                            />
+                        );
+                    }
+                    return null;
+                })}
+            </View>
+            <View style={styles.bonesRow}>
+                {bonesArray.slice(7).map((bone, index) => {
+                    if (bone) {
+                        const boneImageName = bone.join('_');
+                        return (
+                            <Image
+                                key={`bone-${index + 7}`}
+                                style={styles.boneImage}
+                                source={boneImages[boneImageName]}
+                            />
+                        );
+                    }
+                    return null;
+                })}
+            </View>
         </View>
     );
 };
@@ -137,7 +169,25 @@ const styles = StyleSheet.create({
     },
     bonesText: {
         fontWeight: 'bold',
-    }
+    },
+    bonesRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 5,
+        position: 'absolute',
+        bottom: 70,
+    },
+    boneImage: {
+        width: 30,
+        height: 60,
+        marginHorizontal: 2,
+    },
+    turnButton: {
+        width: 15,
+        height: 15,
+        position: 'absolute',
+    },
 });
 
 export default BettingPhase;

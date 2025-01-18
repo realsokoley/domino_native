@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { gql, useMutation, useQuery } from '@apollo/client';
+import boneImages from '../../assets/BoneAssets';
 
 const GET_GAME_USER_ROUND = gql`
   query GetGameUserRounds($gameRoundId: Int!) {
@@ -46,7 +47,7 @@ const MAKE_MOVE = gql`
   }
 `;
 
-const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, getBonesStyle }) => {
+const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, getBonesStyle, getTurnButtonStyle }) => {
     const [currentMoveNumber, setCurrentMoveNumber] = useState(0);
     const [currentTurn, setCurrentTurn] = useState(0);
     const [movesNumber, setMovesNumber] = useState(-1);
@@ -105,6 +106,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
                 acc[move.game_user_round.game_user.id] = move.bone;
                 return acc;
             }, {});
+
             setPlayerMoves(prevMoves => {
                 return { ...prevMoves, ...newMoves };
             });
@@ -156,32 +158,57 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
 
     return (
         <View style={styles.container}>
-            <Text>Your Bones: {currentUserRound?.bones_start}</Text>
             {players.map((player) => {
                 const bonesStyle = getBonesStyle(`position${player.position}`);
                 return (
                     <View key={player.id} style={[styles.bonesContainer, bonesStyle]}>
-                        {playerMoves[player.id] != null && currentTurn != 0  && (
-                            <Text style={styles.bonesText}>Bone: {playerMoves[player.id]}</Text>
+                        {playerMoves[player.id] != null && currentTurn != 0 && (
+                            <Image
+                                style={styles.boneImage}
+                                source={boneImages[JSON.parse(playerMoves[player.id]).join('_')]}
+                            />
                         )}
                     </View>
                 );
             })}
-            <View style={styles.bonesContainer}>
-                {bones.map((bone, originalIndex) => {
+            <View style={styles.bonesRow}>
+                {bones.slice(0, 7).map((bone, originalIndex) => {
                     if (playedBones.includes(originalIndex)) return null;
                     const isCurrentUserTurn = moveData?.move_user_by_move_and_turn.some(
                         move => move.game_user_round.game_user.id == currentGameUserId && move.bone === null
                     );
+                    const boneImageName = bone.join('_');
                     return (
                         <TouchableOpacity
-                            key={originalIndex}
+                            key={`bone-${originalIndex}`}
                             onPress={() => isCurrentUserTurn && !isMakingMove && handleBoneClick(originalIndex)}
                             disabled={!isCurrentUserTurn || isMakingMove}
                         >
-                            <Text style={[styles.bonesText, (!isCurrentUserTurn || isMakingMove) && styles.disabledBoneText]}>
-                                {bone}
-                            </Text>
+                            <Image
+                                style={[styles.boneImage, (!isCurrentUserTurn || isMakingMove) && styles.disabledBoneImage]}
+                                source={boneImages[boneImageName]}
+                            />
+                        </TouchableOpacity>
+                    );
+                })}
+            </View>
+            <View style={styles.bonesRow}>
+                {bones.slice(7).map((bone, originalIndex) => {
+                    if (playedBones.includes(originalIndex)) return null;
+                    const isCurrentUserTurn = moveData?.move_user_by_move_and_turn.some(
+                        move => move.game_user_round.game_user.id == currentGameUserId && move.bone === null
+                    );
+                    const boneImageName = bone.join('_');
+                    return (
+                        <TouchableOpacity
+                            key={`bone-${originalIndex + 7}`}
+                            onPress={() => isCurrentUserTurn && !isMakingMove && handleBoneClick(originalIndex)}
+                            disabled={!isCurrentUserTurn || isMakingMove}
+                        >
+                            <Image
+                                style={[styles.boneImage, (!isCurrentUserTurn || isMakingMove) && styles.disabledBoneImage]}
+                                source={boneImages[boneImageName]}
+                            />
                         </TouchableOpacity>
                     );
                 })}
@@ -202,6 +229,22 @@ const styles = StyleSheet.create({
     },
     bonesText: {
         fontWeight: 'bold',
+    },
+    bonesRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginVertical: 5,
+        position: 'absolute',
+        bottom: 70, // Adjust this value to position the bones rows under the player's circle
+    },
+    boneImage: {
+        width: 30,
+        height: 60,
+        marginHorizontal: 2,
+    },
+    disabledBoneImage: {
+        opacity: 0.5,
     },
     disabledBoneText: {
         color: 'gray',

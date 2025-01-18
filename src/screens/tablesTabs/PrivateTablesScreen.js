@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, Alert, TextInput } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { useMutation, gql, useQuery } from '@apollo/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -45,15 +46,13 @@ const CHECK_ACTIVE_GAME = gql`
 
 const PrivateTablesScreen = () => {
     const navigation = useNavigation();
-    const [count, setCount] = useState('');
-    const [roundsMaxAmount, setRoundsMaxAmount] = useState('');
-    const [roundsBeforeMaxAmount, setRoundsBeforeMaxAmount] = useState('');
+    const [count, setCount] = useState(2);
+    const [roundsMaxAmount, setRoundsMaxAmount] = useState(4);
+    const [roundsBeforeMaxAmount, setRoundsBeforeMaxAmount] = useState(4);
     const [uniqueCode, setUniqueCode] = useState('');
-    const [rooms, setRooms] = useState([]);
     const [userId, setUserId] = useState(null);
     const [isRegisteredInGame, setIsRegisteredInGame] = useState(false);
 
-    // Fetch user_id from AsyncStorage
     useEffect(() => {
         const fetchUserId = async () => {
             try {
@@ -90,22 +89,18 @@ const PrivateTablesScreen = () => {
         try {
             const { data } = await createPrivateRoom({
                 variables: {
-                    count: parseInt(count, 10),
-                    rounds_max_amount: parseInt(roundsMaxAmount, 10),
-                    rounds_before_max_amount: parseInt(roundsBeforeMaxAmount, 10),
+                    count,
+                    rounds_max_amount: roundsMaxAmount,
+                    rounds_before_max_amount: roundsBeforeMaxAmount,
                 },
             });
 
-            // Save uniq_code to AsyncStorage
             await AsyncStorage.setItem('active_game_uniq_code', data.createPrivateRoom.uniq_code);
             await AsyncStorage.setItem('active_game_id', data.createPrivateRoom.id);
-            console.log(data.createPrivateRoom.id);
 
-
-            // Reset the form
-            setCount('');
-            setRoundsMaxAmount('');
-            setRoundsBeforeMaxAmount('');
+            setCount(2);
+            setRoundsMaxAmount(4);
+            setRoundsBeforeMaxAmount(4);
             navigation.reset({
                 index: 0,
                 routes: [
@@ -124,11 +119,9 @@ const PrivateTablesScreen = () => {
                 variables: { uniq_code: uniqueCode },
             });
 
-            // Save uniq_code to AsyncStorage
             await AsyncStorage.setItem('active_game_uniq_code', data.registerInPrivateRoom.uniq_code);
             await AsyncStorage.setItem('active_game_id', data.registerInPrivateRoom.id);
 
-            // Reset the unique code input
             setUniqueCode('');
             navigation.reset({
                 index: 0,
@@ -149,29 +142,32 @@ const PrivateTablesScreen = () => {
             ) : (
                 <>
                     <Text style={styles.title}>Create a Private Room</Text>
-                    <TextInput
-                        placeholder="Player Count"
+                    <Text>Players Count: {count}</Text>
+                    <Slider
+                        minimumValue={2}
+                        maximumValue={4}
+                        step={1}
                         value={count}
-                        onChangeText={setCount}
-                        keyboardType="numeric"
-                        style={styles.input}
-                        editable={!isRegisteredInGame}
+                        onValueChange={setCount}
+                        style={styles.slider}
                     />
-                    <TextInput
-                        placeholder="Max Rounds"
-                        value={roundsMaxAmount}
-                        onChangeText={setRoundsMaxAmount}
-                        keyboardType="numeric"
-                        style={styles.input}
-                        editable={!isRegisteredInGame}
-                    />
-                    <TextInput
-                        placeholder="Rounds Before Max Amount"
+                    <Text>Highest Domino Value: {roundsBeforeMaxAmount}</Text>
+                    <Slider
+                        minimumValue={4}
+                        maximumValue={12}
+                        step={1}
                         value={roundsBeforeMaxAmount}
-                        onChangeText={setRoundsBeforeMaxAmount}
-                        keyboardType="numeric"
-                        style={styles.input}
-                        editable={!isRegisteredInGame}
+                        onValueChange={setRoundsBeforeMaxAmount}
+                        style={styles.slider}
+                    />
+                    <Text>Middle Game Rounds Amount: {roundsMaxAmount}</Text>
+                    <Slider
+                        minimumValue={2}
+                        maximumValue={6}
+                        step={1}
+                        value={roundsMaxAmount}
+                        onValueChange={setRoundsMaxAmount}
+                        style={styles.slider}
                     />
                     <Button
                         title={creatingRoom ? 'Creating...' : 'Create Room'}
@@ -203,11 +199,10 @@ const PrivateTablesScreen = () => {
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20 },
     title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+    slider: { width: '100%', height: 40, marginBottom: 20 },
     input: { borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5 },
     error: { color: 'red', marginBottom: 10 },
     info: { fontSize: 16, color: 'blue', textAlign: 'center', marginBottom: 20 },
-    subtitle: { fontSize: 18, fontWeight: 'bold', marginTop: 20 },
-    room: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
 });
 
 export default PrivateTablesScreen;

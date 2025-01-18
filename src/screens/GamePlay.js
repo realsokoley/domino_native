@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
+import boneImages from '../assets/BoneAssets';
 import BettingPhase from './gamePlay/BettingPhase';
 import MovesPhase from './gamePlay/MovesPhase';
 import RoundPreparation from './gamePlay/RoundPreparation';
@@ -23,6 +24,8 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const [currentPhase, setCurrentPhase] = useState('waiting');
     const [gameRounds, setGameRounds] = useState([]);
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+    const [showFirstMoveDraw, setShowFirstMoveDraw] = useState(false);
+    const [showTurnLotBones, setShowTurnLotBones] = useState(false);
     const gameIdInt = parseInt(gameDetails?.id, 10);
     const { data, loading, error, refetch } = useQuery(GET_GAME_ROUNDS, {
         variables: { gameId: gameIdInt },
@@ -78,8 +81,16 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     setCurrentRoundIndex(data.game_rounds_by_game_id.findIndex(round => round.id === lastValidRound.id));
                 } else {
                     setTimeout(() => {
-                        setCurrentPhase('preparation');
-                    }, 3000);
+                        setShowFirstMoveDraw(true);
+                        setTimeout(() => {
+                        setShowTurnLotBones(true);
+                            setTimeout(() => {
+                                setShowTurnLotBones(false);
+                                setShowFirstMoveDraw(false);
+                                setCurrentPhase('preparation');
+                            }, 2000);
+                        }, 2000);
+                    }, 2000);
                 }
             }
         }
@@ -88,7 +99,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const getBonesStyle = (position) => {
         switch (position) {
             case 'position0':
-                return { bottom: 90, alignSelf: 'center' };
+                return { bottom: 220, alignSelf: 'center' };
             case 'position1':
                 return usersCount === 2 ?
                     { top: 90, alignSelf: 'center' } :
@@ -99,6 +110,25 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     { top: 90, alignSelf: 'center' };
             case 'position3':
                 return { alignSelf: 'center', transform: [{ translateY: -40 } , {translateX: 60}] };
+            default:
+                return {};
+        }
+    };
+
+    const getTurnButtonStyle = (position) => {
+        switch (position) {
+            case 'position0':
+                return { bottom: 220, alignSelf: 'center', transform: [{translateX: 25}]};
+            case 'position1':
+                return usersCount === 2 ?
+                    { top: 90, alignSelf: 'center', transform: [{translateX: 25}] } :
+                    { alignSelf: 'center', transform: [{ translateY: -30 }, {translateX: -60}] };
+            case 'position2':
+                return usersCount === 3 ?
+                    { alignSelf: 'center', transform: [{ translateY: -30 } , {translateX: 60}] } :
+                    { top: 90, alignSelf: 'center', transform: [{translateX: 25}] };
+            case 'position3':
+                return { alignSelf: 'center', transform: [{ translateY: -30 } , {translateX: 60}] };
             default:
                 return {};
         }
@@ -127,6 +157,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                             onBettingComplete={() => handleBettingComplete(gameRound)}
                             players={players}
                             getBetStyle={getBonesStyle}
+                            getTurnButtonStyle={getTurnButtonStyle}
                         />
                     )}
                     {currentPhase === 'moves' && index === currentRoundIndex && (
@@ -136,6 +167,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                             onMovesComplete={() => handleMovesComplete(gameRound)}
                             players={players}
                             getBonesStyle={getBonesStyle}
+                            getTurnButtonStyle={getTurnButtonStyle}
                         />
                     )}
                     {currentPhase === 'counting' && index === currentRoundIndex && (
@@ -148,22 +180,29 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     )}
                 </>
             ))}
+            {showFirstMoveDraw && <Text>First move draw</Text>}
+            {players.map((player) => {
+                const bonesStyle = getBonesStyle(`position${player.position}`);
+                const boneImageName = player.turn_lot_bone?.replace(',', '_').replace('[', '').replace(']', '');
+                if (showTurnLotBones && currentPhase === 'waiting') {
+                    return (
+                        <View key={`bones-${player.user.id}`} style={[styles.bonesContainer, bonesStyle]}>
+                            {currentPhase === 'waiting' && (
+                                <Image
+                                    style={styles.bonesImage}
+                                    source={boneImages[boneImageName]}
+                                />
+                            )}
+                        </View>
+                    );
+                }
+            })}
             {players.map((player) => {
                 const positionStyle = dynamicStyles[`position${player.position}`];
                 const playerName = player.user.id == userId ? "You" : player.user.username;
                 return (
                     <View key={player.user.id} style={[styles.playerCircle, positionStyle]}>
                         <Text>{playerName}</Text>
-                    </View>
-                );
-            })}
-            {players.map((player) => {
-                const bonesStyle = getBonesStyle(`position${player.position}`);
-                return (
-                    <View key={`bones-${player.user.id}`} style={[styles.bonesContainer, bonesStyle]}>
-                        {currentPhase === 'waiting' && (
-                            <Text style={styles.bonesText}>{player.turn_lot_bone}</Text>
-                        )}
                     </View>
                 );
             })}
@@ -178,7 +217,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'relative',
         borderWidth: 2,
-        borderColor: 'red',
+        borderColor: '#fff',
     },
     playerCircle: {
         width: 60,
@@ -195,7 +234,11 @@ const styles = StyleSheet.create({
     },
     bonesText: {
         fontWeight: 'bold',
-    }
+    },
+    bonesImage: {
+        width: 30,
+        height: 60,
+    },
 });
 
 export default GamePlay;
