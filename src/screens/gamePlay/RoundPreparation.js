@@ -57,7 +57,7 @@ const RoundPreparation = ({ key, currentGameUserId, gameRoundId, onPreparationCo
     }, [gameUserRoundData, onPreparationComplete]);
 
     // Handle loading and error states
-    if (roundGeneratingLoading || gameUserRoundLoading) return <Text>Loading...</Text>;
+    if (roundGeneratingLoading || gameUserRoundLoading) return <Text style={{marginTop: -100}}>Loading...</Text>;
     if (roundGeneratingError || gameUserRoundError) return <Text>Error preparing round: {roundGeneratingError?.message || gameUserRoundError?.message}</Text>;
 
     return (
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
+        top: -100,
     }
 });
 

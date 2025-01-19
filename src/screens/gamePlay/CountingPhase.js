@@ -32,7 +32,7 @@ const CountingPhase = ({ gameRoundId, players, getBonesStyle, onCountingComplete
         }
     }, [data, onCountingComplete]);
 
-    if (loading) return <Text>Loading...</Text>;
+    if (loading) return <Text style={{marginTop: -100}}>Loading...</Text>;
     if (error) return <Text>Error: {error.message}</Text>;
 
     return (
@@ -65,9 +65,11 @@ const styles = StyleSheet.create({
     bonesContainer: {
         position: 'absolute',
         padding: 5,
+        textAlign: 'center',
     },
     bonesText: {
-        fontWeight: 'bold',
+        fontWeight: 'thin',
+        textAlign: 'center',
     }
 });
 

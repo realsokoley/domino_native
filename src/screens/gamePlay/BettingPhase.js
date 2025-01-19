@@ -4,6 +4,7 @@ import { Picker } from '@react-native-picker/picker';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import turnButtonImage from '../../../assets/turn_button.png';
 import boneImages from '../../assets/BoneAssets';
+import { TouchableOpacity } from 'react-native';
 
 const GET_GAME_USER_ROUND = gql`
   query GetGameUserRounds($gameRoundId: Int!) {
@@ -36,7 +37,7 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
     const [bet, setBet] = useState(0);
     const { data, loading, error } = useQuery(GET_GAME_USER_ROUND, {
         variables: { gameRoundId },
-        pollInterval: 2000,
+        pollInterval: 1000,
     });
 
     const [placeBet, { loading: placingBetLoading }] = useMutation(PLACE_BET);
@@ -71,7 +72,7 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
         }
     };
 
-    if (loading) return <Text>Loading...</Text>;
+    if (loading) return <Text style={{marginTop: -100}}>Loading...</Text>;
     if (error) return <Text>Error: {error.message}</Text>;
 
     const currentUserRound = data?.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId);
@@ -82,23 +83,36 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
         console.error('Error parsing bones_start:', e);
     }
 
-    const firstUserToBet = data.game_user_round_by_round_id.find(r => r.bet == null);
+    const gameUserRounds = data.game_user_round_by_round_id;
+    const allBetsNull = gameUserRounds.every(r => r.bet == null);
+
+    let firstUserToBet;
+    if (allBetsNull) {
+        firstUserToBet = gameUserRounds.find(r => r.turn === 0);
+    } else {
+        const maxTurnWithBet = Math.max(...gameUserRounds.filter(r => r.bet != null).map(r => r.turn));
+        firstUserToBet = gameUserRounds.find(r => r.turn === maxTurnWithBet + 1);
+    }
 
     return (
         <View style={styles.container}>
-            {firstUserToBet?.game_user.id == currentGameUserId && (
+            {firstUserToBet?.game_user.id == currentGameUserId ? (
                 <>
                     <Picker
                         selectedValue={bet}
                         onValueChange={handleBetChange}
-                        style={{ height: 50, width: 150, top: -80 }}>
+                        style={{ height: 40, width: 150, top: -160 }}>
                         {[...Array(bonesArray.length + 1).keys()].map(value => (
                             <Picker.Item key={value} label={`${value}`} value={value} />
                         ))}
                     </Picker>
-                    <Button title="Place Bet" onPress={submitBet} disabled={placingBetLoading} />
+                    <TouchableOpacity style={{ top: -55, }} onPress={submitBet} disabled={placingBetLoading}>
+                        <Text style={{fontSize: 22, fontWeight: 'bold', opacity: 0.7}}>Place Bet</Text>
+                    </TouchableOpacity>
                 </>
-            )}
+            ) : (
+                <Text style={{top: -100 }}>Waiting for other players to bet...</Text>)
+            }
             {players.map((player) => {
                 const playerBet = data?.game_user_round_by_round_id.find(r => r.game_user.user.id == player.user.id)?.bet;
                 const betStyle = getBetStyle(`position${player.position}`);
@@ -138,7 +152,7 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
                     return null;
                 })}
             </View>
-            <View style={styles.bonesRow}>
+            <View style={[styles.bonesRow, { bottom: 0 }]}>
                 {bonesArray.slice(7).map((bone, index) => {
                     if (bone) {
                         const boneImageName = bone.join('_');
@@ -176,11 +190,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginVertical: 5,
         position: 'absolute',
-        bottom: 70,
+        bottom: 96,
     },
     boneImage: {
-        width: 30,
-        height: 60,
+        width: 45,
+        height: 90,
         marginHorizontal: 2,
     },
     turnButton: {

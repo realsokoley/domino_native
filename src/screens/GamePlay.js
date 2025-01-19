@@ -5,6 +5,7 @@ import BettingPhase from './gamePlay/BettingPhase';
 import MovesPhase from './gamePlay/MovesPhase';
 import RoundPreparation from './gamePlay/RoundPreparation';
 import CountingPhase from './gamePlay/CountingPhase';
+import FinalPhase from './gamePlay/FinalPhase';
 import { gql, useQuery } from '@apollo/client';
 
 const GET_GAME_ROUNDS = gql`
@@ -19,7 +20,7 @@ const GET_GAME_ROUNDS = gql`
     }
   `;
 
-const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players, dynamicStyles, usersCount }) => {
+const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players, dynamicStyles, usersCount, navigation }) => {
     const [currentTurn, setCurrentTurn] = useState(null);
     const [currentPhase, setCurrentPhase] = useState('waiting');
     const [gameRounds, setGameRounds] = useState([]);
@@ -58,9 +59,13 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
 
     const handleCountingComplete = (gameUserRound) => {
         setTimeout(() => {
-            setCurrentRoundIndex(currentRoundIndex + 1);
-            setCurrentPhase('preparation');
-        }, 2000);
+            if (gameDetails.game_finished == 1) {
+                setCurrentPhase('final');
+            } else {
+                setCurrentRoundIndex(currentRoundIndex + 1);
+                setCurrentPhase('preparation');
+            }
+        }, 3000);
     };
 
     useEffect(() => {
@@ -99,17 +104,17 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const getBonesStyle = (position) => {
         switch (position) {
             case 'position0':
-                return { bottom: 220, alignSelf: 'center' };
+                return { bottom: 310, alignSelf: 'center' };
             case 'position1':
                 return usersCount === 2 ?
                     { top: 90, alignSelf: 'center' } :
-                    { alignSelf: 'center', transform: [{ translateY: -40 }, {translateX: -60}] };
+                    { alignSelf: 'center', transform: [{ translateY: -80 }, {translateX: -60}] };
             case 'position2':
                 return usersCount === 3 ?
-                    { alignSelf: 'center', transform: [{ translateY: -40 } , {translateX: 60}] } :
+                    { alignSelf: 'center', transform: [{ translateY: -80 } , {translateX: 60}] } :
                     { top: 90, alignSelf: 'center' };
             case 'position3':
-                return { alignSelf: 'center', transform: [{ translateY: -40 } , {translateX: 60}] };
+                return { alignSelf: 'center', transform: [{ translateY: -80 } , {translateX: 60}] };
             default:
                 return {};
         }
@@ -118,17 +123,17 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const getTurnButtonStyle = (position) => {
         switch (position) {
             case 'position0':
-                return { bottom: 220, alignSelf: 'center', transform: [{translateX: 25}]};
+                return { bottom: 310, alignSelf: 'center', transform: [{translateX: 25}]};
             case 'position1':
                 return usersCount === 2 ?
-                    { top: 90, alignSelf: 'center', transform: [{translateX: 25}] } :
-                    { alignSelf: 'center', transform: [{ translateY: -30 }, {translateX: -60}] };
+                    { top: 80, alignSelf: 'center', transform: [{translateX: 25}] } :
+                    { alignSelf: 'center', transform: [{ translateY: -105 }, {translateX: -80}] };
             case 'position2':
                 return usersCount === 3 ?
-                    { alignSelf: 'center', transform: [{ translateY: -30 } , {translateX: 60}] } :
-                    { top: 90, alignSelf: 'center', transform: [{translateX: 25}] };
+                    { alignSelf: 'center', transform: [{ translateY: -105 } , {translateX: 80}] } :
+                    { top: 80, alignSelf: 'center', transform: [{translateX: 25}] };
             case 'position3':
-                return { alignSelf: 'center', transform: [{ translateY: -30 } , {translateX: 60}] };
+                return { alignSelf: 'center', transform: [{ translateY: -105 } , {translateX: 80}] };
             default:
                 return {};
         }
@@ -139,6 +144,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
 
     return (
         <View style={styles.gameArea}>
+            <View style={styles.whiteLine} />
             {gameRounds.map((gameRound, index) => (
                 <>
                     {currentPhase === 'preparation' && index === currentRoundIndex && (
@@ -178,9 +184,10 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                             getBonesStyle={getBonesStyle}
                         />
                     )}
+                    {currentPhase === 'final' && index === currentRoundIndex && <FinalPhase players={players} navigation={navigation} />}
                 </>
             ))}
-            {showFirstMoveDraw && <Text>First move draw</Text>}
+            {showFirstMoveDraw && !showTurnLotBones && <Text>First move draw</Text>}
             {players.map((player) => {
                 const bonesStyle = getBonesStyle(`position${player.position}`);
                 const boneImageName = player.turn_lot_bone?.replace(',', '_').replace('[', '').replace(']', '');
@@ -202,7 +209,32 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                 const playerName = player.user.id == userId ? "You" : player.user.username;
                 return (
                     <View key={player.user.id} style={[styles.playerCircle, positionStyle]}>
-                        <Text>{playerName}</Text>
+                        <Text style={styles.playerName}>{playerName}</Text>
+                    </View>
+                );
+            })}
+
+            {players.map((player) => {
+                const scorePlaceStyle = (() => {
+                    switch (player.position) {
+                        case 0: return { bottom: 220, alignSelf: 'center', }
+                        case 3:
+                            return { right: 20, alignSelf: 'center', transform: [{ translateY: -40 }] };
+                        case 1:
+                            return usersCount === 2 ?
+                                { top: 2, alignSelf: 'center' } :
+                                { left: 20, alignSelf: 'center', transform: [{ translateY: -40 }] };
+                        case 2:
+                            return usersCount === 3 ?
+                                { right: 20, alignSelf: 'center', transform: [{ translateY: -40 }] }:
+                                { top: 2, alignSelf: 'center' };
+                        default:
+                            return {};
+                    }
+                })();
+                return (
+                    <View style={[styles.scorePlaceContainer, scorePlaceStyle]}>
+                        {player.current_score !== null && <Text>GP: {player.current_score}</Text>}
                     </View>
                 );
             })}
@@ -218,6 +250,13 @@ const styles = StyleSheet.create({
         position: 'relative',
         borderWidth: 2,
         borderColor: '#fff',
+    },
+    whiteLine: {
+        position: 'absolute',
+        bottom: 196,
+        width: '100%',
+        height: 2,
+        backgroundColor: 'white',
     },
     playerCircle: {
         width: 60,
@@ -238,6 +277,16 @@ const styles = StyleSheet.create({
     bonesImage: {
         width: 30,
         height: 60,
+    },
+    playerName: {
+        textAlign: 'center',
+        fontSize: 12,
+        color: 'black',
+        zIndex: 1000,
+    },
+    scorePlaceContainer: {
+        position: 'absolute',
+        zIndex: 1000,
     },
 });
 

@@ -32,6 +32,8 @@ const GET_GAME_USERS = gql`
       id
       turn_lot_bone
       turn_value
+      current_score
+      current_place
       user {
         id
         username
@@ -136,14 +138,14 @@ const GameScreen = ({ route, navigation }) => {
     };
 
     const getDynamicStyles = (usersCount) => ({
-        position0: { bottom: 150, alignSelf: 'center' },
+        position0: { bottom: 240, alignSelf: 'center' },
         position1: usersCount === 2
             ? { top: 20, alignSelf: 'center' }
-            : { left: 20, alignSelf: 'center', transform: [{ translateY: -40 }] },
+            : { left: 20, alignSelf: 'center', transform: [{ translateY: -80 }] },
         position2: usersCount === 3
-            ? { right: 20, alignSelf: 'center', transform: [{ translateY: -40 }] }
+            ? { right: 20, alignSelf: 'center', transform: [{ translateY: -80 }] }
             : { top: 20, alignSelf: 'center' },
-        position3: { right: 20, alignSelf: 'center', transform: [{ translateY: -40 }] },
+        position3: { right: 20, alignSelf: 'center', transform: [{ translateY: -80 }] },
     });
 
     return (
@@ -165,7 +167,7 @@ const GameScreen = ({ route, navigation }) => {
             <Text>Players: {usersRegistered}/{usersCount}</Text>
             <Text>Highest Domino Value: {roundsBeforeMaxAmount}</Text>
             <Text>Mid Game Rounds Amount: {roundsMaxAmount}</Text>
-            <GamePlay userId={userId} currentGameUserId={currentGameUserId} gameStarted={gameStarted} gameDetails={gameDetailsData?.game} players={players} dynamicStyles={getDynamicStyles(usersCount)} usersCount={usersCount} />
+            <GamePlay userId={userId} currentGameUserId={currentGameUserId} gameStarted={gameStarted} gameDetails={gameDetailsData?.game} players={players} dynamicStyles={getDynamicStyles(usersCount)} usersCount={usersCount} navigation={navigation} />
         </View>
     );
 };
