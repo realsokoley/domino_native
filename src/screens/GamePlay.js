@@ -88,7 +88,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     setTimeout(() => {
                         setShowFirstMoveDraw(true);
                         setTimeout(() => {
-                        setShowTurnLotBones(true);
+                            setShowTurnLotBones(true);
                             setTimeout(() => {
                                 setShowTurnLotBones(false);
                                 setShowFirstMoveDraw(false);
@@ -144,6 +144,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
 
     return (
         <View style={styles.gameArea}>
+            {gameStarted  && (<Text style={styles.roundNumber}>Round: {currentRoundIndex + 1}</Text>)}
             <View style={styles.whiteLine} />
             {gameRounds.map((gameRound, index) => (
                 <>
@@ -287,6 +288,14 @@ const styles = StyleSheet.create({
     scorePlaceContainer: {
         position: 'absolute',
         zIndex: 1000,
+    },
+    roundNumber: {
+        position: 'absolute',
+        top: 2,
+        right: 5,
+        fontSize: 16,
+        fontWeight: 'normal',
+        color: 'black',
     },
 });
 

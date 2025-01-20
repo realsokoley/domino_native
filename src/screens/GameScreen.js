@@ -159,7 +159,7 @@ const GameScreen = ({ route, navigation }) => {
                 </TouchableOpacity>
             </View>
             <View style={styles.gameCodeContainer}>
-                <Text>Game Code: {uniqCode}</Text>
+                {uniqCode !== 'XXXPUB' && <Text>Game Code: {uniqCode}</Text>}
                 <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
                     <Icon name="copy-outline" size={20} color="#000" />
                 </TouchableOpacity>
