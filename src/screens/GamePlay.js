@@ -27,10 +27,11 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
     const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
     const [showFirstMoveDraw, setShowFirstMoveDraw] = useState(false);
     const [showTurnLotBones, setShowTurnLotBones] = useState(false);
-    const gameIdInt = parseInt(gameDetails?.id, 10);
+    const gameIdInt = gameDetails?.id ? parseInt(gameDetails.id, 10) : null;
+
     const { data, loading, error, refetch } = useQuery(GET_GAME_ROUNDS, {
         variables: { gameId: gameIdInt },
-        skip: currentPhase !== 'waiting',
+        skip: gameIdInt == null || currentPhase !== 'waiting',
         onCompleted: data => {
             setGameRounds(data.game_rounds_by_game_id);
         },
@@ -144,13 +145,13 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
 
     return (
         <View style={styles.gameArea}>
-            {gameStarted  && (<Text style={styles.roundNumber}>Round: {currentRoundIndex + 1}</Text>)}
+            {gameStarted && (<Text style={styles.roundNumber}>Round: {currentRoundIndex + 1}</Text>)}
             <View style={styles.whiteLine} />
             {gameRounds.map((gameRound, index) => (
-                <>
+                <React.Fragment key={gameRound.id}>
                     {currentPhase === 'preparation' && index === currentRoundIndex && (
                         <RoundPreparation
-                            key={gameRound.id}
+                            roundKey={gameRound.id}
                             currentGameUserId={currentGameUserId}
                             gameRoundId={parseInt(gameRound?.id, 10)}
                             onPreparationComplete={() => handlePreparationComplete(gameRound)}
@@ -186,7 +187,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                         />
                     )}
                     {currentPhase === 'final' && index === currentRoundIndex && <FinalPhase players={players} navigation={navigation} />}
-                </>
+                </React.Fragment>
             ))}
             {showFirstMoveDraw && !showTurnLotBones && <Text>First move draw</Text>}
             {players.map((player) => {
@@ -214,7 +215,6 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     </View>
                 );
             })}
-
             {players.map((player) => {
                 const scorePlaceStyle = (() => {
                     switch (player.position) {
@@ -234,7 +234,7 @@ const GamePlay = ({ userId, currentGameUserId, gameStarted, gameDetails, players
                     }
                 })();
                 return (
-                    <View style={[styles.scorePlaceContainer, scorePlaceStyle]}>
+                    <View key={`score-${player.user.id}`} style={[styles.scorePlaceContainer, scorePlaceStyle]}>
                         {player.current_score !== null && <Text>GP: {player.current_score}</Text>}
                     </View>
                 );

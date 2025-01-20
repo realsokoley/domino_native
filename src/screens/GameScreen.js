@@ -57,12 +57,14 @@ const GameScreen = ({ route, navigation }) => {
 
     const { data: gameDetailsData } = useQuery(GET_GAME_DETAILS, {
         variables: { id: gameId },
+        skip: !gameId,
         onCompleted: data => {
             if (data.game) {
                 setGameStarted(data.game.game_started == 1);
                 setUsersCount(data.game.users_count);
                 setRoundsMaxAmount(data.game.rounds_max_amount);
                 setRoundsBeforeMaxAmount(data.game.rounds_before_max_amount);
+                console.log('gameData:', data);
             }
         },
         pollInterval: 2000,
@@ -70,6 +72,7 @@ const GameScreen = ({ route, navigation }) => {
 
     const { data: gameUsersData } = useQuery(GET_GAME_USERS, {
         variables: { gameId: parseInt(gameId, 10) },
+        skip: !gameId,
         pollInterval: 2000,
     });
 
@@ -88,7 +91,10 @@ const GameScreen = ({ route, navigation }) => {
     useEffect(() => {
         const fetchGameId = async () => {
             const storedGameId = await AsyncStorage.getItem('active_game_id');
-            if (storedGameId) setGameId(parseInt(storedGameId, 10));
+            if (storedGameId) {
+                setGameId(parseInt(storedGameId, 10));
+                console.log('Fetched gameId:', storedGameId);
+            }
         };
         fetchGameId();
     }, []);
@@ -105,6 +111,8 @@ const GameScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (gameUsersData?.game_users_by_game_id && usersCount) {
+            console.log('gameUsersData:', gameUsersData);
+            console.log('gameData:', gameDetailsData);
             const sortedPlayers = gameUsersData.game_users_by_game_id.filter(p => p != null);
             const userIndex = sortedPlayers.findIndex((player) => player.user.id == userId);
             const positions = sortedPlayers.map((player, index) => ({
@@ -125,7 +133,7 @@ const GameScreen = ({ route, navigation }) => {
             Alert.alert('Error', 'You cannot unregister from a game that has already started.');
             return;
         }
-        unregisterFromRoom({ variables: { type: 'private', game_id: parseInt(gameId, 10) } });
+        unregisterFromRoom({ variables: { type: uniqCode === 'XXXPUB' ? 'public' : 'private', game_id: parseInt(gameId, 10) } });
     };
 
     const handleBackToLobby = () => {

@@ -13,6 +13,7 @@ const CREATE_PRIVATE_ROOM = gql`
       rounds_before_max_amount: $rounds_before_max_amount
     ) {
       id
+      game_id
       uniq_code
       count
     }
@@ -23,6 +24,7 @@ const REGISTER_IN_PRIVATE_ROOM = gql`
   mutation RegisterInPrivateRoom($uniq_code: String!) {
     registerInPrivateRoom(uniq_code: $uniq_code) {
       id
+      game_id
       uniq_code
       count
       room_created
@@ -96,7 +98,7 @@ const PrivateTablesScreen = () => {
             });
 
             await AsyncStorage.setItem('active_game_uniq_code', data.createPrivateRoom.uniq_code);
-            await AsyncStorage.setItem('active_game_id', data.createPrivateRoom.id);
+            await AsyncStorage.setItem('active_game_id', data.createPrivateRoom.game_id.toString());
 
             setCount(2);
             setRoundsMaxAmount(4);
@@ -104,7 +106,7 @@ const PrivateTablesScreen = () => {
             navigation.reset({
                 index: 0,
                 routes: [
-                    { name: 'Game', params: { gameId: data.createPrivateRoom.id } },
+                    { name: 'Game', params: { gameId: data.createPrivateRoom.game_id.toString() } },
                 ],
             });
         } catch (err) {
@@ -120,13 +122,13 @@ const PrivateTablesScreen = () => {
             });
 
             await AsyncStorage.setItem('active_game_uniq_code', data.registerInPrivateRoom.uniq_code);
-            await AsyncStorage.setItem('active_game_id', data.registerInPrivateRoom.id);
+            await AsyncStorage.setItem('active_game_id', data.registerInPrivateRoom.game_id.toString());
 
             setUniqueCode('');
             navigation.reset({
                 index: 0,
                 routes: [
-                    { name: 'Game', params: { gameId: data.registerInPrivateRoom.id } },
+                    { name: 'Game', params: { gameId: data.registerInPrivateRoom.game_id.toString() } },
                 ],
             });
         } catch (err) {

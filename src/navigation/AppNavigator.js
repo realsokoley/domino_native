@@ -7,6 +7,7 @@ import LoginScreen from '../screens/LoginScreen';
 import LobbyScreen from '../screens/LobbyScreen';
 import RegistrationScreen from '../screens/RegistrationScreen';
 import GameScreen from '../screens/GameScreen';
+import GameRulesScreen from '../screens/GameRulesScreen';
 
 const ME_QUERY = gql`
   query Me {
@@ -68,6 +69,7 @@ const AppNavigator = () => {
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Register" component={RegistrationScreen} />
                 <Stack.Screen name="Game" component={GameScreen} />
+                <Stack.Screen name="GameRules" component={GameRulesScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { Button, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import PrivateTablesScreen from './tablesTabs/PrivateTablesScreen';
 import PublicTablesScreen from './tablesTabs/PublicTablesScreen';
-import { Button, View, Text, StyleSheet } from 'react-native';
+import InformationScreen from './tablesTabs/InformationScreen';
+import SettingsScreen from './tablesTabs/SettingsScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { gql, useQuery } from '@apollo/client';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,7 +32,6 @@ const LobbyScreen = () => {
     const [isInActiveGame, setIsInActiveGame] = useState(false);
     const [activeGameId, setActiveGameId] = useState(null);
 
-    // Fetch user_id from AsyncStorage
     useEffect(() => {
         const fetchUserId = async () => {
             try {
@@ -47,7 +49,7 @@ const LobbyScreen = () => {
             }
         };
         fetchUserId();
-    }, []);
+    }, [navigation]);
 
     const { data, error, refetch } = useQuery(CHECK_ACTIVE_GAME, {
         variables: { userId },
@@ -116,20 +118,56 @@ const LobbyScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Button title="Logout" onPress={handleLogout} />
-            {isInActiveGame && (
-                <Button title="Back to Active Game" onPress={handleBackToGame} />
-            )}
+            <View style={styles.buttonRow}>
+                <View style={styles.centerButton}>
+                    {isInActiveGame && (
+                        <Button title="Back to Active Game" onPress={handleBackToGame} />
+                    )}
+                </View>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                    <Icon name="log-out-outline" size={25} color="black" />
+                </TouchableOpacity>
+            </View>
             <Tab.Navigator>
                 <Tab.Screen
                     name="PrivateTables"
                     component={PrivateTablesScreen}
-                    options={{ title: 'Private Tables' }}
+                    options={{
+                        title: 'Private Tables',
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="lock-closed-outline" color={color} size={size} />
+                        ),
+                    }}
                 />
                 <Tab.Screen
                     name="PublicTables"
                     component={PublicTablesScreen}
-                    options={{ title: 'Public Tables' }}
+                    options={{
+                        title: 'Public Tables',
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="people-outline" color={color} size={size} />
+                        ),
+                    }}
+                />
+                <Tab.Screen
+                    name="Information"
+                    component={InformationScreen}
+                    options={{
+                        title: 'Information',
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="information-circle-outline" color={color} size={size} />
+                        ),
+                    }}
+                />
+                <Tab.Screen
+                    name="Settings"
+                    component={SettingsScreen}
+                    options={{
+                        title: 'Game Settings',
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="settings-outline" color={color} size={size} />
+                        ),
+                    }}
                 />
             </Tab.Navigator>
         </View>
@@ -138,6 +176,19 @@ const LobbyScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    buttonRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+    },
+    centerButton: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    logoutButton: {
+        marginLeft: 10,
+    },
 });
 
 export default LobbyScreen;
