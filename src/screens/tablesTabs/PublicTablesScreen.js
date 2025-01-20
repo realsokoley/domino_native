@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Alert } from 'react-native';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,13 +41,22 @@ const REGISTER_IN_PUBLIC_ROOM = gql`
 const PublicTablesScreen = () => {
     const navigation = useNavigation();
     const [selectedRoom, setSelectedRoom] = useState(null);
+    const [activeGameId, setActiveGameId] = useState(null);
     const { data, loading, error } = useQuery(GET_PUBLIC_ROOMS, {
-        variables: { first: 10, page: 1 },
+        variables: { first: 25, page: 1 },
         fetchPolicy: 'network-only',
         pollInterval: 2000,
     });
 
     const [registerInPublicRoom, { loading: registering, error: registerError }] = useMutation(REGISTER_IN_PUBLIC_ROOM);
+
+    useEffect(() => {
+        const fetchActiveGameId = async () => {
+            const storedGameId = await AsyncStorage.getItem('active_game_id');
+            if (storedGameId) setActiveGameId(parseInt(storedGameId, 10));
+        };
+        fetchActiveGameId();
+    }, []);
 
     const handleRegister = async (roomId) => {
         try {
@@ -67,27 +76,34 @@ const PublicTablesScreen = () => {
     if (loading) return <Text>Loading...</Text>;
     if (error) return <Text>Error: {error.message}</Text>;
 
+    if (activeGameId) {
+        return <Text style={styles.info}>You are already registered in a game.</Text>;
+    }
+
+    const sortedData = data.public_rooms.data
+        .filter(room => room.game_started === 0)
+        .sort((a, b) => b.current_count - a.current_count);
+
     return (
-        <ScrollView style={styles.container}>
-            <FlatList
-                data={data.public_rooms.data.filter(room => room.game_started === 0)}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.item} onPress={() => setSelectedRoom(item.id)}>
-                        <Text>Room ID: {item.id}</Text>
-                        <Text>Players: {item.current_count}/{item.game.users_count}</Text>
-                        <Text>Created At: {item.room_created}</Text>
-                        <Text>Highest Domino Value: {item.game.rounds_before_max_amount}</Text>
-                        <Text>Middle Game Rounds Amount: {item.game.rounds_max_amount}</Text>
-                        {selectedRoom === item.id && (
-                            <View style={styles.detailsContainer}>
-                                <Button title="Register" onPress={() => handleRegister(item.id)} />
-                            </View>
-                        )}
-                    </TouchableOpacity>
-                )}
-            />
-        </ScrollView>
+        <FlatList
+            style={styles.container}
+            data={sortedData}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+                <TouchableOpacity style={styles.item} onPress={() => setSelectedRoom(item.id)}>
+                    <Text>Game ID: {item.game.id}</Text>
+                    <Text>Players: {item.current_count}/{item.count}</Text>
+                    <Text>Created At: {item.room_created}</Text>
+                    <Text>Rounds Before Max Amount: {item.game.rounds_before_max_amount}</Text>
+                    <Text>Rounds Max Amount: {item.game.rounds_max_amount}</Text>
+                    {selectedRoom === item.id && (
+                        <View style={styles.detailsContainer}>
+                            <Button title="Register" onPress={() => handleRegister(item.id)} />
+                        </View>
+                    )}
+                </TouchableOpacity>
+            )}
+        />
     );
 };
 
@@ -95,6 +111,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, padding: 20 },
     item: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
     detailsContainer: { marginTop: 10, padding: 10, borderWidth: 1, borderColor: '#ccc' },
+    info: { fontSize: 16, color: 'blue', textAlign: 'center', marginBottom: 20, top: 20 },
 });
 
 export default PublicTablesScreen;

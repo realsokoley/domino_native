@@ -160,9 +160,10 @@ const GameScreen = ({ route, navigation }) => {
             </View>
             <View style={styles.gameCodeContainer}>
                 {uniqCode !== 'XXXPUB' && <Text>Game Code: {uniqCode}</Text>}
-                <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
+                {uniqCode !== 'XXXPUB' && <TouchableOpacity onPress={handleCopyCode} style={styles.copyButton}>
                     <Icon name="copy-outline" size={20} color="#000" />
-                </TouchableOpacity>
+                </TouchableOpacity>}
+                {uniqCode === 'XXXPUB' && <Text>Public Game {gameId}</Text>}
             </View>
             <Text>Players: {usersRegistered}/{usersCount}</Text>
             <Text>Highest Domino Value: {roundsBeforeMaxAmount}</Text>
