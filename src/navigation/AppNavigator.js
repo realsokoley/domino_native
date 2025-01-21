@@ -7,7 +7,7 @@ import LoginScreen from '../screens/LoginScreen';
 import LobbyScreen from '../screens/LobbyScreen';
 import RegistrationScreen from '../screens/RegistrationScreen';
 import GameScreen from '../screens/GameScreen';
-import GameRulesScreen from '../screens/GameRulesScreen';
+import InfoBlockDetailScreen from '../screens/InfoBlockDetailScreen';
 
 const ME_QUERY = gql`
   query Me {
@@ -34,7 +34,6 @@ const AppNavigator = () => {
             }
 
             try {
-                // Run the `me` query with the token as a Bearer token
                 await getMe({
                     context: {
                         headers: {
@@ -58,18 +57,21 @@ const AppNavigator = () => {
     }, [data, getMe]);
 
     if (isAuthenticated === null || loading) {
-        // Optional: Add a loading spinner while validating the user
         return null;
     }
 
     return (
         <NavigationContainer>
             <Stack.Navigator>
-                <Stack.Screen name="Lobby" component={LobbyScreen} />
+                <Stack.Screen
+                    name="Lobby"
+                    component={LobbyScreen}
+                    options={{ title: 'Dominotor' }}
+                />
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Register" component={RegistrationScreen} />
                 <Stack.Screen name="Game" component={GameScreen} />
-                <Stack.Screen name="GameRules" component={GameRulesScreen} />
+                <Stack.Screen name="InfoBlockDetail" component={InfoBlockDetailScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

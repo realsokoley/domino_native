@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useMutation, gql, useQuery } from '@apollo/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { Button as ElementsButton } from 'react-native-elements';
 
 const CREATE_PRIVATE_ROOM = gql`
   mutation CreatePrivateRoom($count: Int!, $rounds_max_amount: Int!, $rounds_before_max_amount: Int!) {
@@ -169,12 +170,14 @@ const PrivateTablesScreen = () => {
                         step={1}
                         value={roundsMaxAmount}
                         onValueChange={setRoundsMaxAmount}
-                        style={styles.slider}
+                        style={[styles.slider, {marginBottom: 10}]}
                     />
-                    <Button
+                    <ElementsButton
                         title={creatingRoom ? 'Creating...' : 'Create Room'}
                         onPress={handleCreateRoom}
                         disabled={creatingRoom || isRegisteredInGame}
+                        buttonStyle={styles.button}
+                        titleStyle={styles.buttonTitle}
                     />
                     {createRoomError && <Text style={styles.error}>Error: {createRoomError.message}</Text>}
 
@@ -186,10 +189,12 @@ const PrivateTablesScreen = () => {
                         style={styles.input}
                         editable={!isRegisteredInGame}
                     />
-                    <Button
+                    <ElementsButton
                         title={registeringRoom ? 'Joining...' : 'Join Room'}
                         onPress={handleJoinRoom}
                         disabled={registeringRoom || isRegisteredInGame}
+                        buttonStyle={styles.button}
+                        titleStyle={styles.buttonTitle}
                     />
                     {registerRoomError && <Text style={styles.error}>Error: {registerRoomError.message}</Text>}
                 </>
@@ -204,7 +209,14 @@ const styles = StyleSheet.create({
     slider: { width: '100%', height: 40, marginBottom: 20 },
     input: { borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5 },
     error: { color: 'red', marginBottom: 10 },
-    info: { fontSize: 16, color: 'blue', textAlign: 'center', marginBottom: 20 },
+    info: { fontSize: 16, color: '#000', textAlign: 'center', marginBottom: 20 },
+    button: {
+        padding: 10,
+        marginBottom: 30,
+    },
+    buttonTitle: {
+        fontSize: 18,
+    },
 });
 
 export default PrivateTablesScreen;

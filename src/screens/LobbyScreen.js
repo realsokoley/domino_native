@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { gql, useQuery } from '@apollo/client';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Button as ElementsButton } from 'react-native-elements';
 
 const Tab = createBottomTabNavigator();
 
@@ -121,7 +122,12 @@ const LobbyScreen = () => {
             <View style={styles.buttonRow}>
                 <View style={styles.centerButton}>
                     {isInActiveGame && (
-                        <Button title="Back to Active Game" onPress={handleBackToGame} />
+                        <ElementsButton
+                            title="Back to Active Game"
+                            onPress={handleBackToGame}
+                            buttonStyle={styles.button}
+                            titleStyle={styles.buttonTitle}
+                        />
                     )}
                 </View>
                 <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
@@ -178,16 +184,22 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     buttonRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'space-between', // Distribute space between buttons
         alignItems: 'center',
         padding: 10,
     },
     centerButton: {
         flex: 1,
-        alignItems: 'center',
+        alignItems: 'flex-start', // Align items to the start (left)
     },
     logoutButton: {
         marginLeft: 10,
+    },
+    button: {
+        padding: 5,
+    },
+    buttonTitle: {
+        fontSize: 12,
     },
 });
 

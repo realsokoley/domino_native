@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button, Alert } from 'react-native';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import React, { useEffect, useState } from 'react';
+import { FlatList, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useQuery, gql, useMutation } from '@apollo/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+import { Button as ElementsButton } from 'react-native-elements';
 
 const GET_PUBLIC_ROOMS = gql`
   query GetPublicRooms($first: Int!, $page: Int) {
@@ -10,7 +12,6 @@ const GET_PUBLIC_ROOMS = gql`
       data {
         game {
           id
-          users_count
           rounds_before_max_amount
           rounds_max_amount
           game_started
@@ -77,7 +78,17 @@ const PublicTablesScreen = () => {
     if (error) return <Text>Error: {error.message}</Text>;
 
     if (activeGameId) {
-        return <Text style={styles.info}>You are already registered in a game.</Text>;
+        return (
+            <View style={styles.container}>
+                <Text style={styles.info}>You are already registered in a game.</Text>
+                <ElementsButton
+                    title="Back to Active Game"
+                    onPress={() => navigation.navigate('Game', { gameId: activeGameId })}
+                    buttonStyle={styles.button}
+                    titleStyle={styles.buttonTitle}
+                />
+            </View>
+        );
     }
 
     const sortedData = data.public_rooms.data
@@ -89,17 +100,22 @@ const PublicTablesScreen = () => {
             style={styles.container}
             data={sortedData}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <TouchableOpacity style={styles.item} onPress={() => setSelectedRoom(item.id)}>
+            renderItem={({ item, index }) => (
+                <TouchableOpacity
+                    style={[styles.item, { backgroundColor: index % 2 === 0 ? '#eee' : 'white' }]}
+                    onPress={() => setSelectedRoom(item.id)}
+                >
                     <Text>Game ID: {item.game.id}</Text>
                     <Text>Players: {item.current_count}/{item.count}</Text>
-                    <Text>Created At: {item.room_created}</Text>
-                    <Text>Rounds Before Max Amount: {item.game.rounds_before_max_amount}</Text>
-                    <Text>Rounds Max Amount: {item.game.rounds_max_amount}</Text>
+                    <Text>Highest Domino Value: {item.game.rounds_before_max_amount}</Text>
+                    <Text>Mid Game Rounds Amount: {item.game.rounds_max_amount}</Text>
                     {selectedRoom === item.id && (
-                        <View style={styles.detailsContainer}>
-                            <Button title="Register" onPress={() => handleRegister(item.id)} />
-                        </View>
+                        <ElementsButton
+                            title="Register"
+                            onPress={() => handleRegister(item.id)}
+                            buttonStyle={styles.button}
+                            titleStyle={styles.buttonTitle}
+                        />
                     )}
                 </TouchableOpacity>
             )}
@@ -109,9 +125,16 @@ const PublicTablesScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20 },
-    item: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-    detailsContainer: { marginTop: 10, padding: 10, borderWidth: 1, borderColor: '#ccc' },
-    info: { fontSize: 16, color: 'blue', textAlign: 'center', marginBottom: 20, top: 20 },
+    item: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    detailsContainer: { marginTop: 10, padding: 10, borderWidth: 1, borderColor: '#eee' },
+    info: { fontSize: 16, color: '#000', textAlign: 'center', marginBottom: 20, top: 20 },
+    button: {
+        padding: 5,
+        marginTop: 5,
+    },
+    buttonTitle: {
+        fontSize: 14,
+    },
 });
 
 export default PublicTablesScreen;
