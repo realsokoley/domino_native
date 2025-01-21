@@ -42,7 +42,6 @@ const REGISTER_IN_PUBLIC_ROOM = gql`
 const PublicTablesScreen = () => {
     const navigation = useNavigation();
     const [selectedRoom, setSelectedRoom] = useState(null);
-    const [activeGameId, setActiveGameId] = useState(null);
     const { data, loading, error } = useQuery(GET_PUBLIC_ROOMS, {
         variables: { first: 25, page: 1 },
         fetchPolicy: 'network-only',
@@ -50,14 +49,6 @@ const PublicTablesScreen = () => {
     });
 
     const [registerInPublicRoom, { loading: registering, error: registerError }] = useMutation(REGISTER_IN_PUBLIC_ROOM);
-
-    useEffect(() => {
-        const fetchActiveGameId = async () => {
-            const storedGameId = await AsyncStorage.getItem('active_game_id');
-            if (storedGameId) setActiveGameId(parseInt(storedGameId, 10));
-        };
-        fetchActiveGameId();
-    }, []);
 
     const handleRegister = async (roomId) => {
         try {
@@ -76,20 +67,6 @@ const PublicTablesScreen = () => {
 
     if (loading) return <Text>Loading...</Text>;
     if (error) return <Text>Error: {error.message}</Text>;
-
-    if (activeGameId) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.info}>You are already registered in a game.</Text>
-                <ElementsButton
-                    title="Back to Active Game"
-                    onPress={() => navigation.navigate('Game', { gameId: activeGameId })}
-                    buttonStyle={styles.button}
-                    titleStyle={styles.buttonTitle}
-                />
-            </View>
-        );
-    }
 
     const sortedData = data.public_rooms.data
         .filter(room => room.game_started === 0)

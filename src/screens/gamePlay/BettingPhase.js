@@ -4,7 +4,8 @@ import { Picker } from '@react-native-picker/picker';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import turnButtonImage from '../../../assets/turn_button.png';
 import boneImages from '../../assets/BoneAssets';
-import { TouchableOpacity } from 'react-native';
+import { Platform } from 'react-native';
+import { Button as ElementsButton } from 'react-native-elements';
 
 const GET_GAME_USER_ROUND = gql`
   query GetGameUserRounds($gameRoundId: Int!) {
@@ -35,12 +36,12 @@ const PLACE_BET = gql`
 
 const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, players, getBetStyle, getTurnButtonStyle }) => {
     const [bet, setBet] = useState(0);
-    const { data, loading, error } = useQuery(GET_GAME_USER_ROUND, {
-        variables: { gameRoundId },
+    const {data, loading, error} = useQuery(GET_GAME_USER_ROUND, {
+        variables: {gameRoundId},
         pollInterval: 1000,
     });
 
-    const [placeBet, { loading: placingBetLoading }] = useMutation(PLACE_BET);
+    const [placeBet, {loading: placingBetLoading}] = useMutation(PLACE_BET);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -56,7 +57,7 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
 
     const submitBet = () => {
         const gameUserRoundId = parseInt(data.game_user_round_by_round_id.find(r => r.game_user.id == currentGameUserId).id, 10);
-        placeBet({ variables: { gameUserRoundId, bet } })
+        placeBet({variables: {gameUserRoundId, bet}})
             .then(response => {
                 console.log('Bet placed:', response.data.bet);
             })
@@ -97,22 +98,30 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
     return (
         <View style={styles.container}>
             {firstUserToBet?.game_user.id == currentGameUserId ? (
-                <>
+                <View style={styles.betContainer}>
                     <Picker
                         selectedValue={bet}
                         onValueChange={handleBetChange}
-                        style={{ height: 40, width: 150, top: -160 }}>
+                        style={styles.picker}
+                    >
                         {[...Array(bonesArray.length + 1).keys()].map(value => (
-                            <Picker.Item key={value} label={`${value}`} value={value} />
+                            <Picker.Item key={value} label={`${value}`} value={value}/>
                         ))}
                     </Picker>
-                    <TouchableOpacity style={{ top: -55, }} onPress={submitBet} disabled={placingBetLoading}>
-                        <Text style={{fontSize: 22, fontWeight: 'bold', opacity: 0.7}}>Place Bet</Text>
-                    </TouchableOpacity>
-                </>
+                    <View style={styles.placeBetButtonContainer}>
+                        <ElementsButton
+                            title="Place Bet"
+                            onPress={submitBet}
+                            buttonStyle={styles.placeBetButton}
+                            titleStyle={styles.placeBetButtonTitle}
+                            disabled={placingBetLoading}
+                        /></View>
+                </View>
             ) : (
-                <Text style={{top: -100 }}>Waiting for other players to bet...</Text>)
-            }
+                <View style={styles.betContainer}>
+                    <Text style={styles.waitingText}>Waiting for other players to bet...</Text>
+                </View>
+            )}
             {players.map((player) => {
                 const playerBet = data?.game_user_round_by_round_id.find(r => r.game_user.user.id == player.user.id)?.bet;
                 const betStyle = getBetStyle(`position${player.position}`);
@@ -152,7 +161,7 @@ const BettingPhase = ({ gameRoundId, currentGameUserId, onBettingComplete, playe
                     return null;
                 })}
             </View>
-            <View style={[styles.bonesRow, { bottom: 0 }]}>
+            <View style={[styles.bonesRow, {bottom: 0}]}>
                 {bonesArray.slice(7).map((bone, index) => {
                     if (bone) {
                         const boneImageName = bone.join('_');
@@ -176,6 +185,38 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    betContainer: {
+        width: '100%',
+        height: 300,
+        position: 'relative',
+        justifyContent: 'center',
+        alignItems: 'center',
+        bottom: 150,
+    },
+    picker: {
+        width: 150,
+        position: 'absolute',
+        top: Platform.OS === 'android' ? 180 : 80,
+    },
+    placeBetButtonContainer: {
+        height: 100,
+        position: 'absolute',
+        top: 230,
+    },
+    placeBetButton: {
+        padding: 10,
+        backgroundColor: '#007bff',
+        borderRadius: 5,
+        width: 130,
+    },
+    placeBetButtonTitle: {
+        fontSize: 16,
+        color: '#fff',
+    },
+    waitingText: {
+        marginTop: 20,
+        fontSize: 16,
     },
     bonesContainer: {
         position: 'absolute',
@@ -203,5 +244,4 @@ const styles = StyleSheet.create({
         position: 'absolute',
     },
 });
-
 export default BettingPhase;

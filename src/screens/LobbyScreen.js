@@ -42,7 +42,7 @@ const LobbyScreen = () => {
                 } else {
                     navigation.reset({
                         index: 0,
-                        routes: [{ name: 'Login' }],
+                        routes: [{name: 'Login'}],
                     });
                 }
             } catch (error) {
@@ -52,8 +52,8 @@ const LobbyScreen = () => {
         fetchUserId();
     }, [navigation]);
 
-    const { data, error, refetch } = useQuery(CHECK_ACTIVE_GAME, {
-        variables: { userId },
+    const {data, error, refetch} = useQuery(CHECK_ACTIVE_GAME, {
+        variables: {userId},
         skip: !userId,
         fetchPolicy: 'network-only',
     });
@@ -88,7 +88,7 @@ const LobbyScreen = () => {
         await AsyncStorage.removeItem('user_id');
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Login' }],
+            routes: [{name: 'Login'}],
         });
     };
 
@@ -96,9 +96,13 @@ const LobbyScreen = () => {
         if (activeGameId) {
             navigation.reset({
                 index: 0,
-                routes: [{ name: 'Game', params: { gameId: activeGameId } }],
+                routes: [{name: 'Game', params: {gameId: activeGameId}}],
             });
         }
+    };
+
+    const handleAccountSettings = () => {
+        navigation.navigate('AccountSettings');
     };
 
     if (!userId) {
@@ -120,6 +124,14 @@ const LobbyScreen = () => {
     return (
         <View style={styles.container}>
             <View style={styles.buttonRow}>
+                <View style={styles.rightButtons}>
+                    <TouchableOpacity onPress={handleAccountSettings} style={styles.accountSettingsButton}>
+                        <Icon name="person-outline" size={21} color="black"/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                        <Icon name="log-out-outline" size={25} color="black"/>
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.centerButton}>
                     {isInActiveGame && (
                         <ElementsButton
@@ -130,9 +142,6 @@ const LobbyScreen = () => {
                         />
                     )}
                 </View>
-                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                    <Icon name="log-out-outline" size={25} color="black" />
-                </TouchableOpacity>
             </View>
             <Tab.Navigator>
                 <Tab.Screen
@@ -140,8 +149,8 @@ const LobbyScreen = () => {
                     component={PrivateTablesScreen}
                     options={{
                         title: 'Private Tables',
-                        tabBarIcon: ({ color, size }) => (
-                            <Icon name="lock-closed-outline" color={color} size={size} />
+                        tabBarIcon: ({color, size}) => (
+                            <Icon name="lock-closed-outline" color={color} size={size}/>
                         ),
                     }}
                 />
@@ -150,8 +159,8 @@ const LobbyScreen = () => {
                     component={PublicTablesScreen}
                     options={{
                         title: 'Public Tables',
-                        tabBarIcon: ({ color, size }) => (
-                            <Icon name="people-outline" color={color} size={size} />
+                        tabBarIcon: ({color, size}) => (
+                            <Icon name="people-outline" color={color} size={size}/>
                         ),
                     }}
                 />
@@ -160,8 +169,8 @@ const LobbyScreen = () => {
                     component={InformationScreen}
                     options={{
                         title: 'Information',
-                        tabBarIcon: ({ color, size }) => (
-                            <Icon name="information-circle-outline" color={color} size={size} />
+                        tabBarIcon: ({color, size}) => (
+                            <Icon name="information-circle-outline" color={color} size={size}/>
                         ),
                     }}
                 />
@@ -170,8 +179,8 @@ const LobbyScreen = () => {
                     component={SettingsScreen}
                     options={{
                         title: 'Game Settings',
-                        tabBarIcon: ({ color, size }) => (
-                            <Icon name="settings-outline" color={color} size={size} />
+                        tabBarIcon: ({color, size}) => (
+                            <Icon name="settings-outline" color={color} size={size}/>
                         ),
                     }}
                 />
@@ -179,21 +188,31 @@ const LobbyScreen = () => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     buttonRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between', // Distribute space between buttons
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: 10,
+        height: 45,
+    },
+    rightButtons: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    accountSettingsButton: {
+        marginRight: 5,
     },
     centerButton: {
         flex: 1,
-        alignItems: 'flex-start', // Align items to the start (left)
+        alignItems: 'flex-start',
     },
     logoutButton: {
-        marginLeft: 10,
+        marginLeft: 5,
     },
     button: {
         padding: 5,

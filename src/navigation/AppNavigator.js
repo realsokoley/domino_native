@@ -7,6 +7,9 @@ import LoginScreen from '../screens/LoginScreen';
 import LobbyScreen from '../screens/LobbyScreen';
 import RegistrationScreen from '../screens/RegistrationScreen';
 import GameScreen from '../screens/GameScreen';
+import AccountSettingsScreen from '../screens/AccountSettingsScreen';
+import NotificationsSettingsScreen from '../screens/NotificationsSettingsScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
 import InfoBlockDetailScreen from '../screens/InfoBlockDetailScreen';
 
 const ME_QUERY = gql`
@@ -22,7 +25,7 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
-    const [getMe, { data, loading, error }] = useLazyQuery(ME_QUERY);
+    const [getMe, { data, loading, error }] = useLazyQuery(ME_QUERY, {fetchPolicy: 'network-only'});
 
     useEffect(() => {
         const validateUser = async () => {
@@ -72,6 +75,9 @@ const AppNavigator = () => {
                 <Stack.Screen name="Register" component={RegistrationScreen} />
                 <Stack.Screen name="Game" component={GameScreen} />
                 <Stack.Screen name="InfoBlockDetail" component={InfoBlockDetailScreen} />
+                <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+                <Stack.Screen name="NotificationsSettings" component={NotificationsSettingsScreen} />
+                <Stack.Screen name="Feedback" component={FeedbackScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

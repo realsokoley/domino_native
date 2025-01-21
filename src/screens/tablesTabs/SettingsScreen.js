@@ -1,24 +1,45 @@
 import React from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Button } from 'react-native-elements';
 
 const SettingsScreen = () => {
+    const navigation = useNavigation();
+
     return (
         <ScrollView style={styles.container}>
             <View style={styles.box}>
                 <Text style={styles.header}>Account Settings</Text>
-                <Text style={styles.content}>[Account settings content]</Text>
+                <View style={styles.buttonContainer}>
+                    <Button
+                        title="Adjust Account"
+                        onPress={() => navigation.navigate('AccountSettings')}
+                        buttonStyle={styles.button}
+                        titleStyle={styles.buttonTitle}
+                    />
+                </View>
             </View>
             <View style={styles.box}>
-                <Text style={styles.header}>Notification Settings</Text>
-                <Text style={styles.content}>[Notification settings content]</Text>
+                <Text style={styles.header}>Notifications Settings</Text>
+                <View style={styles.buttonContainer}>
+                    <Button
+                        title="Adjust Notifications"
+                        onPress={() => navigation.navigate('NotificationsSettings')}
+                        buttonStyle={styles.button}
+                        titleStyle={styles.buttonTitle}
+                    />
+                </View>
             </View>
             <View style={styles.box}>
-                <Text style={styles.header}>Privacy Settings</Text>
-                <Text style={styles.content}>[Privacy settings content]</Text>
-            </View>
-            <View style={styles.box}>
-                <Text style={styles.header}>Other Settings</Text>
-                <Text style={styles.content}>[Other settings content]</Text>
+                <Text style={styles.header}>Feedback</Text>
+                <View style={styles.buttonContainer}>
+                    <Button
+                        title="Send Message"
+                        onPress={() => navigation.navigate('Feedback')}
+                        buttonStyle={styles.button}
+                        titleStyle={styles.buttonTitle}
+                    />
+                </View>
             </View>
         </ScrollView>
     );
@@ -36,6 +57,16 @@ const styles = StyleSheet.create({
     },
     header: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
     content: { fontSize: 16 },
+    buttonContainer: {
+        alignItems: 'flex-start',
+        marginTop: 10,
+    },
+    button: {
+        padding: 5,
+    },
+    buttonTitle: {
+        fontSize: 12,
+    },
 });
 
 export default SettingsScreen;
