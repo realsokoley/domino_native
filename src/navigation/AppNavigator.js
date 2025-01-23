@@ -67,9 +67,10 @@ const AppNavigator = () => {
         <NavigationContainer>
             <Stack.Navigator>
                 <Stack.Screen
+                    screenOptions={{ headerShown: false }}
                     name="Lobby"
                     component={LobbyScreen}
-                    options={{ title: 'Dominotor' }}
+                    options={{ title: 'Lobby', headerBackVisible: false }}
                 />
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Register" component={RegistrationScreen} />

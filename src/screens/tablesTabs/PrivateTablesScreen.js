@@ -49,7 +49,7 @@ const CHECK_ACTIVE_GAME = gql`
 
 const PrivateTablesScreen = () => {
     const navigation = useNavigation();
-    const [count, setCount] = useState(2);
+    const [count, setCount] = useState(3);
     const [roundsMaxAmount, setRoundsMaxAmount] = useState(4);
     const [roundsBeforeMaxAmount, setRoundsBeforeMaxAmount] = useState(4);
     const [uniqueCode, setUniqueCode] = useState('');
@@ -101,7 +101,7 @@ const PrivateTablesScreen = () => {
             await AsyncStorage.setItem('active_game_uniq_code', data.createPrivateRoom.uniq_code);
             await AsyncStorage.setItem('active_game_id', data.createPrivateRoom.game_id.toString());
 
-            setCount(2);
+            setCount(3);
             setRoundsMaxAmount(4);
             setRoundsBeforeMaxAmount(4);
             navigation.reset({
@@ -138,6 +138,20 @@ const PrivateTablesScreen = () => {
         }
     };
 
+    const handleCountChange = (value) => {
+        if (value === 4 && roundsBeforeMaxAmount < 6) {
+            setRoundsBeforeMaxAmount(6);
+        }
+        setCount(value);
+    };
+
+    const handleRoundsBeforeMaxAmountChange = (value) => {
+        if (value < 6 && count === 4) {
+            setCount(3);
+        }
+        setRoundsBeforeMaxAmount(value);
+    };
+
     return (
         <View style={styles.container}>
             {isRegisteredInGame ? (
@@ -151,16 +165,16 @@ const PrivateTablesScreen = () => {
                         maximumValue={4}
                         step={1}
                         value={count}
-                        onValueChange={setCount}
+                        onValueChange={handleCountChange}
                         style={styles.slider}
                     />
                     <Text>Highest Domino Value: {roundsBeforeMaxAmount}</Text>
                     <Slider
-                        minimumValue={4}
+                        minimumValue={count === 4 ? 6 : 4}
                         maximumValue={12}
                         step={1}
                         value={roundsBeforeMaxAmount}
-                        onValueChange={setRoundsBeforeMaxAmount}
+                        onValueChange={handleRoundsBeforeMaxAmountChange}
                         style={styles.slider}
                     />
                     <Text>Middle Game Rounds Amount: {roundsMaxAmount}</Text>

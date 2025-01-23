@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Image, Alert } from 'react-native';
 import { gql, useMutation, useQuery } from '@apollo/client';
+import { useNavigation } from '@react-navigation/native';
 import boneImages from '../../assets/BoneAssets';
 import turnButtonImage from '../../../assets/turn_button.png';
 
@@ -74,6 +75,7 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
     });
 
     const [makeMove] = useMutation(MAKE_MOVE);
+    const navigation = useNavigation();
 
     useEffect(() => {
         if (data && currentMoveNumber == 0 && !finalizingMove) {
@@ -136,6 +138,23 @@ const MovesPhase = ({ gameRoundId, currentGameUserId, onMovesComplete, players, 
             }
         }
     }, [moveData, players.length, currentTurn, movesNumber, bonesNumber, currentMoveNumber, onMovesComplete, refetchMoveData, finalizingMove]);
+
+    useEffect(() => {
+        let inactivityTimeout;
+        const isCurrentUserTurn = moveData?.move_user_by_move_and_turn.some(
+            move => move.game_user_round.game_user.id == currentGameUserId && move.bone === null
+        );
+        if (isCurrentUserTurn) {
+            inactivityTimeout = setTimeout(() => {
+                Alert.alert('Inactivity Notice', 'You were inactive for 1 minute. You can return to the game from the lobby.');
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Lobby' }],
+                });
+            }, 58000);
+        }
+        return () => clearTimeout(inactivityTimeout);
+    }, [moveData, currentGameUserId, currentTurn]);
 
     const handleBoneClick = (boneId) => {
         if (finalizingMove) return; // Block functionality if finalizing move

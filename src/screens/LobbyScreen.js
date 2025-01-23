@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Button, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import PrivateTablesScreen from './tablesTabs/PrivateTablesScreen';
 import PublicTablesScreen from './tablesTabs/PublicTablesScreen';
@@ -10,6 +10,8 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { gql, useQuery } from '@apollo/client';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Button as ElementsButton } from 'react-native-elements';
+import logoMin from '../../assets/logo_min.png';
+import logo from '../../assets/Logo.png';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,7 +44,7 @@ const LobbyScreen = () => {
                 } else {
                     navigation.reset({
                         index: 0,
-                        routes: [{name: 'Login'}],
+                        routes: [{ name: 'Login' }],
                     });
                 }
             } catch (error) {
@@ -52,8 +54,8 @@ const LobbyScreen = () => {
         fetchUserId();
     }, [navigation]);
 
-    const {data, error, refetch} = useQuery(CHECK_ACTIVE_GAME, {
-        variables: {userId},
+    const { data, error, refetch } = useQuery(CHECK_ACTIVE_GAME, {
+        variables: { userId },
         skip: !userId,
         fetchPolicy: 'network-only',
     });
@@ -88,7 +90,7 @@ const LobbyScreen = () => {
         await AsyncStorage.removeItem('user_id');
         navigation.reset({
             index: 0,
-            routes: [{name: 'Login'}],
+            routes: [{ name: 'Login' }],
         });
     };
 
@@ -96,7 +98,7 @@ const LobbyScreen = () => {
         if (activeGameId) {
             navigation.reset({
                 index: 0,
-                routes: [{name: 'Game', params: {gameId: activeGameId}}],
+                routes: [{ name: 'Game', params: { gameId: activeGameId } }],
             });
         }
     };
@@ -123,16 +125,9 @@ const LobbyScreen = () => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.buttonRow}>
-                <View style={styles.rightButtons}>
-                    <TouchableOpacity onPress={handleAccountSettings} style={styles.accountSettingsButton}>
-                        <Icon name="person-outline" size={21} color="black"/>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                        <Icon name="log-out-outline" size={25} color="black"/>
-                    </TouchableOpacity>
-                </View>
-                <View style={styles.centerButton}>
+            <View style={styles.header}>
+                <View style={styles.leftContainer}>
+                    {isInActiveGame && (<Image source={logoMin} style={styles.logo} />)}
                     {isInActiveGame && (
                         <ElementsButton
                             title="Back to Active Game"
@@ -141,6 +136,15 @@ const LobbyScreen = () => {
                             titleStyle={styles.buttonTitle}
                         />
                     )}
+                    {!isInActiveGame && <Image source={logo} style={{ height: 25, width: 150 }} />}
+                </View>
+                <View style={styles.rightButtons}>
+                    <TouchableOpacity onPress={handleAccountSettings} style={styles.accountSettingsButton}>
+                        <Icon name="person-outline" size={21} color="black" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                        <Icon name="log-out-outline" size={25} color="black" />
+                    </TouchableOpacity>
                 </View>
             </View>
             <Tab.Navigator>
@@ -149,8 +153,8 @@ const LobbyScreen = () => {
                     component={PrivateTablesScreen}
                     options={{
                         title: 'Private Tables',
-                        tabBarIcon: ({color, size}) => (
-                            <Icon name="lock-closed-outline" color={color} size={size}/>
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="lock-closed-outline" color={color} size={size} />
                         ),
                     }}
                 />
@@ -159,8 +163,8 @@ const LobbyScreen = () => {
                     component={PublicTablesScreen}
                     options={{
                         title: 'Public Tables',
-                        tabBarIcon: ({color, size}) => (
-                            <Icon name="people-outline" color={color} size={size}/>
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="people-outline" color={color} size={size} />
                         ),
                     }}
                 />
@@ -169,8 +173,8 @@ const LobbyScreen = () => {
                     component={InformationScreen}
                     options={{
                         title: 'Information',
-                        tabBarIcon: ({color, size}) => (
-                            <Icon name="information-circle-outline" color={color} size={size}/>
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="information-circle-outline" color={color} size={size} />
                         ),
                     }}
                 />
@@ -179,8 +183,8 @@ const LobbyScreen = () => {
                     component={SettingsScreen}
                     options={{
                         title: 'Game Settings',
-                        tabBarIcon: ({color, size}) => (
-                            <Icon name="settings-outline" color={color} size={size}/>
+                        tabBarIcon: ({ color, size }) => (
+                            <Icon name="settings-outline" color={color} size={size} />
                         ),
                     }}
                 />
@@ -188,34 +192,37 @@ const LobbyScreen = () => {
         </View>
     );
 };
+
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    buttonRow: {
+    header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 10,
         height: 45,
     },
+    leftContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    logo: {
+        width: 25,
+        height: 25,
+    },
     rightButtons: {
-        position: 'absolute',
-        top: 10,
-        right: 10,
         flexDirection: 'row',
         alignItems: 'center',
     },
     accountSettingsButton: {
         marginRight: 5,
     },
-    centerButton: {
-        flex: 1,
-        alignItems: 'flex-start',
-    },
     logoutButton: {
         marginLeft: 5,
     },
     button: {
         padding: 5,
+        marginLeft: 5,
     },
     buttonTitle: {
         fontSize: 12,
